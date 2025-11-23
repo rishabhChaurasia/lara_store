@@ -59,7 +59,12 @@
                 <!-- SKU -->
                 <div>
                     <label for="sku" class="block text-sm font-medium text-gray-700 mb-2">SKU</label>
-                    <input type="text" id="sku" name="sku" value="{{ old('sku') }}" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    <div class="flex gap-2">
+                        <input type="text" id="sku" name="sku" value="{{ old('sku') }}" required class="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        <button type="button" id="generate-sku-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 whitespace-nowrap">
+                            Generate SKU
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -94,4 +99,55 @@
         </form>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const generateSkuBtn = document.getElementById('generate-sku-btn');
+        const skuInput = document.getElementById('sku');
+        const nameInput = document.getElementById('name');
+
+        generateSkuBtn.addEventListener('click', function() {
+            let prefix = '';
+
+            // If product name is available, use it to generate prefix
+            if (nameInput && nameInput.value.trim() !== '') {
+                const nameParts = nameInput.value.trim().split(/\s+/);
+                if (nameParts.length >= 2) {
+                    // Use first letter of first two words
+                    prefix = (nameParts[0].charAt(0) + nameParts[1].charAt(0)).toUpperCase();
+                } else {
+                    // Use first 3 letters of the single word
+                    prefix = nameParts[0].substring(0, 3).toUpperCase();
+                }
+
+                // Clean up the prefix to only contain letters
+                prefix = prefix.replace(/[^A-Z]/g, '');
+            } else {
+                // Otherwise generate a random 3-letter prefix
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                for (let i = 0; i < 3; i++) {
+                    prefix += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+            }
+
+            // Add a 3-digit random number for uniqueness
+            const randomNum = Math.floor(100 + Math.random() * 900); // 3-digit random number
+
+            // Format as prefix-number (e.g., WGT-746)
+            const sku = `${prefix}-${randomNum}`;
+
+            skuInput.value = sku;
+        });
+
+        // Also generate SKU when product name changes, if SKU is empty
+        if (nameInput) {
+            nameInput.addEventListener('blur', function() {
+                if (!skuInput.value.trim()) {
+                    generateSkuBtn.click();
+                }
+            });
+        }
+    });
+</script>
+
 @endsection

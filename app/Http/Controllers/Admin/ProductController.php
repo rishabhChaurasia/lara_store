@@ -41,7 +41,8 @@ class ProductController extends Controller
             $data['image_path'] = $request->file('image_path')->store('products', 'public');
         }
 
-        $data['slug'] = Str::slug($data['name']); // Generate slug from name
+        // Generate slug from name and ensure uniqueness
+        $data['slug'] = $this->generateUniqueSlug($data['name']);
 
         Product::create($data);
 
@@ -89,7 +90,13 @@ class ProductController extends Controller
             $data['image_path'] = $product->image_path;
         }
 
-        $data['slug'] = Str::slug($data['name']); // Update slug from name
+        // Update slug from name only if name has changed
+        if (isset($data['name']) && $data['name'] !== $product->name) {
+            $data['slug'] = $this->generateUniqueSlug($data['name'], $product->id);
+        } else {
+            // Keep the existing slug if name hasn't changed
+            $data['slug'] = $product->slug;
+        }
 
         $product->update($data);
 
@@ -121,5 +128,32 @@ class ProductController extends Controller
         cache()->forget('admin_dashboard_low_stock');
 
         return redirect()->route('products.index')->with('success', 'Product deleted successfully.');
+    }
+
+    /**
+     * Generate a unique slug for the product
+     */
+    private function generateUniqueSlug($name, $exceptId = null)
+    {
+        $baseSlug = Str::slug($name);
+        $slug = $baseSlug;
+        $count = 1;
+
+        // Check for existing slugs and add counter if needed
+        while (true) {
+            $query = Product::where('slug', $slug);
+            if ($exceptId) {
+                $query->where('id', '!=', $exceptId);
+            }
+
+            if (!$query->exists()) {
+                break;
+            }
+
+            $slug = $baseSlug . '-' . $count;
+            $count++;
+        }
+
+        return $slug;
     }
 }
