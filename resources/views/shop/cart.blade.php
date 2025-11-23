@@ -65,28 +65,28 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
                                     <div class="flex items-center">
-                                        <button 
-                                            type="button" 
-                                            class="decrease-quantity bg-gray-200 hover:bg-gray-300 h-8 w-8 rounded-l text-lg"
-                                            data-product-id="{{ $item->product ? $item->product->id : $item->id }}"
-                                        >
-                                            -
-                                        </button>
-                                        <input 
-                                            type="number" 
-                                            min="1" 
-                                            max="10" 
-                                            value="{{ $item->quantity ?? $item->quantity }}" 
-                                            class="quantity-input border-t border-b border-gray-300 h-8 w-16 text-center"
-                                            data-product-id="{{ $item->product ? $item->product->id : $item->id }}"
-                                        >
-                                        <button 
-                                            type="button" 
-                                            class="increase-quantity bg-gray-200 hover:bg-gray-300 h-8 w-8 rounded-r text-lg"
-                                            data-product-id="{{ $item->product ? $item->product->id : $item->id }}"
-                                        >
-                                            +
-                                        </button>
+                                        <form method="POST" action="{{ route('cart.update') }}" class="inline">
+                                            @csrf
+                                            @method('PATCH')
+                                            <input type="hidden" name="product_id" value="{{ $item->product ? $item->product->id : ($item->product_id ?? $item->id) }}">
+                                            <div class="flex">
+                                                <button type="submit" name="quantity_change" value="-1" class="bg-gray-200 hover:bg-gray-300 h-8 w-8 rounded-l text-lg">
+                                                    -
+                                                </button>
+                                                <input
+                                                    type="number"
+                                                    name="quantity"
+                                                    min="1"
+                                                    max="10"
+                                                    value="{{ $item->quantity ?? $item->quantity }}"
+                                                    class="quantity-input border-t border-b border-gray-300 h-8 w-16 text-center"
+                                                    onchange="this.form.submit()"
+                                                >
+                                                <button type="submit" name="quantity_change" value="1" class="bg-gray-200 hover:bg-gray-300 h-8 w-8 rounded-r text-lg">
+                                                    +
+                                                </button>
+                                            </div>
+                                        </form>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -165,87 +165,63 @@
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Quantity update buttons
-    document.querySelectorAll('.increase-quantity').forEach(button => {
-        button.addEventListener('click', function() {
-            const productId = this.getAttribute('data-product-id');
-            const input = document.querySelector(`.quantity-input[data-product-id="${productId}"]`);
-            let quantity = parseInt(input.value) || 0;
-            quantity = Math.min(quantity + 1, 10); // Max 10 items
-            input.value = quantity;
-            updateQuantity(productId, quantity);
-        });
-    });
-
-    document.querySelectorAll('.decrease-quantity').forEach(button => {
-        button.addEventListener('click', function() {
-            const productId = this.getAttribute('data-product-id');
-            const input = document.querySelector(`.quantity-input[data-product-id="${productId}"]`);
-            let quantity = parseInt(input.value) || 1;
-            quantity = Math.max(quantity - 1, 1); // Min 1 item
-            input.value = quantity;
-            updateQuantity(productId, quantity);
-        });
-    });
-
-    // Direct input change
-    document.querySelectorAll('.quantity-input').forEach(input => {
-        input.addEventListener('change', function() {
-            const productId = this.getAttribute('data-product-id');
-            let quantity = parseInt(this.value) || 1;
-            quantity = Math.max(1, Math.min(quantity, 10)); // Clamp between 1 and 10
-            this.value = quantity;
-            updateQuantity(productId, quantity);
-        });
-    });
-
-    function updateQuantity(productId, quantity) {
-        fetch('{{ route('cart.update') }}', {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: JSON.stringify({
-                product_id: productId,
-                quantity: quantity
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if(data.status === 'success') {
-                // Update cart totals
-                document.getElementById('cart-subtotal').textContent = '$' + (data.cart_total / 100).toFixed(2);
-                document.getElementById('cart-total').textContent = '$' + (data.cart_total / 100).toFixed(2);
-                
-                // Show success message
-                const tempMessage = document.createElement('div');
-                tempMessage.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50';
-                tempMessage.textContent = data.message;
-                document.body.appendChild(tempMessage);
-                
-                setTimeout(() => {
-                    tempMessage.remove();
-                }, 3000);
-            } else {
-                // Show error message
-                const tempMessage = document.createElement('div');
-                tempMessage.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded shadow-lg z-50';
-                tempMessage.textContent = data.message || 'An error occurred';
-                document.body.appendChild(tempMessage);
-                
-                setTimeout(() => {
-                    tempMessage.remove();
-                }, 3000);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
+    // Function to submit quantity form
+    function submitQuantity(input) {
+        input.form.submit();
     }
-});
+
+    // Function to update quantity via buttons
+    function updateQuantity(button, change) {
+        const form = button.form;
+        const quantityInput = form.querySelector('input[name="quantity"]');
+        let currentQuantity = parseInt(quantityInput.value) || 1;
+
+        if (change === 1) {
+            currentQuantity = Math.min(currentQuantity + 1, 10);
+        } else if (change === -1) {
+            currentQuantity = Math.max(currentQuantity - 1, 1);
+        }
+
+        quantityInput.value = currentQuantity;
+        form.submit();
+    }
+
+    // Update cart badge in header after operations
+    document.addEventListener('DOMContentLoaded', function() {
+        // Count total items in cart
+        let totalItems = 0;
+        const quantityInputs = document.querySelectorAll('.quantity-input[name="quantity"]');
+        quantityInputs.forEach(input => {
+            totalItems += parseInt(input.value) || 0;
+        });
+
+        // Update cart badge in header
+        updateCartBadge(totalItems);
+    });
+
+    function updateCartBadge(count) {
+        // Update desktop cart badge
+        const cartBadgeDesktop = document.querySelector('a[href$="/cart"] span.absolute');
+        if (cartBadgeDesktop) {
+            if (count > 0) {
+                cartBadgeDesktop.textContent = count;
+                cartBadgeDesktop.classList.remove('hidden');
+            } else {
+                cartBadgeDesktop.classList.add('hidden');
+            }
+        }
+
+        // Update mobile cart badge
+        const cartBadgeMobile = document.querySelector('.mobile-menu a[href$="/cart"] span.absolute');
+        if (cartBadgeMobile) {
+            if (count > 0) {
+                cartBadgeMobile.textContent = count;
+                cartBadgeMobile.classList.remove('hidden');
+            } else {
+                cartBadgeMobile.classList.add('hidden');
+            }
+        }
+    }
 </script>
 @endpush
 @endsection

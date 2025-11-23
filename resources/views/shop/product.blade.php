@@ -298,42 +298,50 @@
     
     // Update wishlist button on click
     document.addEventListener('DOMContentLoaded', function() {
-        const wishlistForms = document.querySelectorAll('form[action^="{{ route(\'wishlist.toggle\', \'0\') }}"]'.replace('0', ''));
-        
+        const wishlistForms = document.querySelectorAll('form[action*="wishlist.toggle"]');
+
         wishlistForms.forEach(form => {
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
-                
+
+                // Get the CSRF token from the meta tag
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+                // Create form data from the form
+                const formData = new FormData(form);
+
                 fetch(form.action, {
                     method: 'POST',
                     headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
                         'X-Requested-With': 'XMLHttpRequest'
                     },
-                    body: JSON.stringify({})
+                    body: formData
                 })
                 .then(response => response.json())
                 .then(data => {
                     if(data.status === 'success') {
                         const button = form.querySelector('button');
                         const svg = button.querySelector('svg');
-                        const text = button.querySelector('svg + span') || button.querySelector('span');
-                        
+                        const text = button.querySelector('svg + span') || button.querySelector('span span'); // Adjusted selector
+
                         if(data.action === 'added') {
                             svg.setAttribute('fill', 'currentColor');
+                            svg.classList.add('text-red-500');
                             if(text) text.textContent = 'Remove from Wishlist';
                         } else {
                             svg.setAttribute('fill', 'none');
+                            svg.classList.remove('text-red-500');
+                            svg.classList.add('text-gray-500');
                             if(text) text.textContent = 'Add to Wishlist';
                         }
-                        
+
                         // Show temporary message
                         const tempMessage = document.createElement('div');
                         tempMessage.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50';
                         tempMessage.textContent = data.message;
                         document.body.appendChild(tempMessage);
-                        
+
                         setTimeout(() => {
                             tempMessage.remove();
                         }, 3000);

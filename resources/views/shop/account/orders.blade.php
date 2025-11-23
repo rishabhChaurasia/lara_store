@@ -48,7 +48,7 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${{ number_format($order->grand_total / 100, 2) }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    <a href="{{ route('order.details', $order->id) ?? '#' }}" class="text-blue-600 hover:text-blue-900 mr-3">View</a>
+                                    <a href="{{ route('account.order.details', $order->id) ?? '#' }}" class="text-blue-600 hover:text-blue-900 mr-3">View</a>
                                 </td>
                             </tr>
                         @endforeach

@@ -38,10 +38,24 @@
 
                         <div class="hidden sm:flex sm:items-center sm:ms-6 space-x-4">
                             <!-- Cart -->
-                            <a href="{{ route('cart.index') }}" class="text-gray-500 hover:text-gray-700">
+                            <a href="{{ route('cart.index') }}" class="text-gray-500 hover:text-gray-700 relative">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                                 </svg>
+                                @php
+                                    $cartCount = 0;
+                                    if(Auth::check()) {
+                                        $cart = \App\Models\Cart::where('user_id', Auth::id())->first();
+                                        $cartCount = $cart ? $cart->items->count() : 0;
+                                    } else {
+                                        $cartCount = session('cart') ? count(session('cart')) : 0;
+                                    }
+                                @endphp
+                                @if($cartCount > 0)
+                                    <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                        {{ $cartCount }}
+                                    </span>
+                                @endif
                             </a>
 
                             <!-- Auth Links -->
@@ -62,9 +76,80 @@
                                 <a href="{{ route('register') }}" class="text-gray-500 hover:text-gray-700">Register</a>
                             @endauth
                         </div>
+
+                        <!-- Mobile menu button -->
+                        <div class="flex items-center sm:hidden">
+                            <!-- Cart with badge on mobile -->
+                            <a href="{{ route('cart.index') }}" class="text-gray-500 hover:text-gray-700 relative mr-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                                @php
+                                    $cartCount = 0;
+                                    if(Auth::check()) {
+                                        $cart = \App\Models\Cart::where('user_id', Auth::id())->first();
+                                        $cartCount = $cart ? $cart->items->count() : 0;
+                                    } else {
+                                        $cartCount = session('cart') ? count(session('cart')) : 0;
+                                    }
+                                @endphp
+                                @if($cartCount > 0)
+                                    <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                        {{ $cartCount }}
+                                    </span>
+                                @endif
+                            </a>
+
+                            <!-- Mobile menu button -->
+                            <button type="button" class="mobile-menu-button text-gray-500 hover:text-gray-700" aria-label="Toggle menu">
+                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mobile menu -->
+                <div class="mobile-menu hidden bg-white border-t border-gray-200">
+                    <div class="pt-2 pb-3 space-y-1 px-4">
+                        <a href="{{ route('shop.index') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
+                            Shop
+                        </a>
+
+                        @auth
+                            <a href="{{ route('account.dashboard') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
+                                {{ Auth::user()->name }}
+                            </a>
+                            <a href="{{ route('logout') }}"
+                               onclick="event.preventDefault(); document.getElementById('logout-form-mobile').submit();"
+                               class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
+                                Logout
+                            </a>
+                            <form id="logout-form-mobile" action="{{ route('logout') }}" method="POST" class="hidden">
+                                @csrf
+                            </form>
+                        @else
+                            <a href="{{ route('login') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Login</a>
+                            <a href="{{ route('register') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Register</a>
+                        @endauth
                     </div>
                 </div>
             </nav>
+
+            <script>
+                // Mobile menu toggle functionality
+                document.addEventListener('DOMContentLoaded', function() {
+                    const mobileMenuButton = document.querySelector('.mobile-menu-button');
+                    const mobileMenu = document.querySelector('.mobile-menu');
+
+                    if (mobileMenuButton && mobileMenu) {
+                        mobileMenuButton.addEventListener('click', function() {
+                            mobileMenu.classList.toggle('hidden');
+                        });
+                    }
+                });
+            </script>
 
             <!-- Page Heading -->
             @hasSection('header')

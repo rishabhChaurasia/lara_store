@@ -30,11 +30,7 @@ class CartController extends Controller
                 'expires_at' => now()->addDays(30)
             ]);
 
-            // Cache cart items for a short time (5 minutes) for better performance
-            $cacheKey = 'user_cart_items_' . Auth::id();
-            $cartItems = cache()->remember($cacheKey, 300, function() use ($cart) {
-                return $cart->items()->with('product')->get();
-            });
+            $cartItems = $cart->items()->with('product')->get();
         } else {
             // Guest user - get from session
             $cartItems = collect(session()->get('cart', []));
@@ -92,9 +88,6 @@ class CartController extends Controller
             }
 
             $cartItem->save();
-
-            // Clear the user's cart cache
-            cache()->forget('user_cart_items_' . Auth::id());
         } else {
             // Guest user - use session cart
             $cart = session()->get('cart', []);
@@ -128,69 +121,125 @@ class CartController extends Controller
      */
     public function update(Request $request)
     {
-        $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1|max:10'
-        ]);
-
-        $product = Product::findOrFail($request->product_id);
-
-        if (Auth::check()) {
-            // Authenticated user - update database cart
-            $cart = Cart::firstOrCreate([
-                'user_id' => Auth::id()
+        try {
+            $request->validate([
+                'product_id' => 'required|exists:products,id',
             ]);
 
-            $cartItem = $cart->items()->where('product_id', $product->id)->first();
+            $product = Product::findOrFail($request->product_id);
 
-            if ($cartItem) {
-                if ($request->quantity <= 0) {
-                    $cartItem->delete();
-                } else {
-                    if ($request->quantity > $product->stock_quantity) {
-                        return response()->json([
-                            'status' => 'error',
-                            'message' => 'Not enough stock available.'
-                        ]);
+            // Handle quantity change from form submission
+            $newQuantity = $request->input('quantity');
+
+            // If quantity_change is provided (for + and - buttons), calculate new quantity
+            if ($request->has('quantity_change')) {
+                $cartItems = $this->getCartItems();
+                $cartItem = null;
+
+                foreach ($cartItems as $item) {
+                    $itemId = $item->product ? $item->product->id : ($item->product_id ?? $item->id);
+                    if ($itemId == $request->product_id) {
+                        $cartItem = $item;
+                        break;
                     }
-                    $cartItem->quantity = $request->quantity;
-                    $cartItem->save();
+                }
+
+                if ($cartItem) {
+                    $currentQuantity = $cartItem->quantity ?? $cartItem['quantity'];
+                    $change = (int)$request->quantity_change;
+                    $newQuantity = $currentQuantity + $change;
+                    $newQuantity = max(1, $newQuantity); // Minimum quantity is 1
+                    $newQuantity = min(10, $newQuantity); // Maximum quantity is 10
+                } else {
+                    return back()->with('error', 'Cart item not found.');
                 }
             }
 
-            // Clear the user's cart cache
-            cache()->forget('user_cart_items_' . Auth::id());
-        } else {
-            // Guest user - update session cart
-            $cart = session()->get('cart', []);
+            // Validate quantity range
+            $newQuantity = max(1, min(10, (int)$newQuantity));
 
-            $productId = $product->id;
-            if (isset($cart[$productId])) {
-                if ($request->quantity <= 0) {
-                    unset($cart[$productId]);
-                } else {
-                    if ($request->quantity > $product->stock_quantity) {
-                        return response()->json([
-                            'status' => 'error',
-                            'message' => 'Not enough stock available.'
-                        ]);
+            \Log::info('Cart update request started', [
+                'user_id' => Auth::id(),
+                'user_email' => Auth::user() ? Auth::user()->email : 'guest',
+                'product_id' => $request->product_id,
+                'new_quantity' => $newQuantity,
+                'request_all' => $request->all()
+            ]);
+
+            if (Auth::check()) {
+                // Authenticated user - update database cart
+                $cart = Cart::firstOrCreate([
+                    'user_id' => Auth::id()
+                ]);
+
+                \Log::info('Found cart for user', ['cart_id' => $cart->id]);
+
+                $cartItem = $cart->items()->where('product_id', $product->id)->first();
+                \Log::info('Cart item query result', [
+                    'product_id' => $product->id,
+                    'cart_item_exists' => $cartItem ? true : false,
+                    'cart_item_data' => $cartItem ? $cartItem->toArray() : null
+                ]);
+
+                if ($cartItem) {
+                    \Log::info('Updating existing cart item', [
+                        'old_quantity' => $cartItem->quantity,
+                        'new_quantity' => $newQuantity
+                    ]);
+
+                    if ($newQuantity <= 0) {
+                        $cartItem->delete();
+                        \Log::info('Cart item deleted');
+                    } else {
+                        if ($newQuantity > $product->stock_quantity) {
+                            return back()->with('error', 'Not enough stock available. Only ' . $product->stock_quantity . ' items available.');
+                        }
+                        $cartItem->quantity = $newQuantity;
+                        $cartItem->save();
+                        \Log::info('Cart item updated', ['new_quantity' => $cartItem->quantity]);
                     }
-                    $cart[$productId]['quantity'] = $request->quantity;
+                } else {
+                    \Log::warning('Cart item not found for product', ['product_id' => $product->id]);
+                    return back()->with('error', 'Cart item not found for the specified product.');
                 }
-                session()->put('cart', $cart);
+            } else {
+                // Guest user - update session cart
+                $cart = session()->get('cart', []);
+
+                \Log::info('Guest cart contents before update', [
+                    'cart' => $cart,
+                    'product_id_to_update' => $request->product_id
+                ]);
+
+                $productId = $request->product_id; // Use the product_id from the request
+                if (isset($cart[$productId])) {
+                    if ($newQuantity <= 0) {
+                        unset($cart[$productId]);
+                        \Log::info('Removed item from guest cart');
+                    } else {
+                        if ($newQuantity > $product->stock_quantity) {
+                            return back()->with('error', 'Not enough stock available. Only ' . $product->stock_quantity . ' items available.');
+                        }
+                        $cart[$productId]['quantity'] = $newQuantity;
+                        \Log::info('Updated guest cart item', ['new_quantity' => $cart[$productId]['quantity']]);
+                    }
+                    session()->put('cart', $cart);
+                } else {
+                    \Log::warning('Product not found in guest cart', ['product_id' => $productId, 'cart_contents' => array_keys($cart)]);
+                    return back()->with('error', 'Item not found in your cart.');
+                }
             }
+
+            return back()->with('success', 'Cart updated successfully');
+
+        } catch (\Exception $e) {
+            \Log::error('Error in cart update', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return back()->with('error', 'An error occurred while updating the cart: ' . $e->getMessage());
         }
-
-        // Return cart data for AJAX updates
-        $cartItems = $this->getCartItems();
-        $cartTotal = $this->getCartTotal($cartItems);
-
-        return response()->json([
-            'status' => 'success',
-            'cart_items' => $cartItems->count(),
-            'cart_total' => $cartTotal,
-            'message' => 'Cart updated successfully'
-        ]);
     }
 
     /**
@@ -209,9 +258,6 @@ class CartController extends Controller
             ]);
 
             $cart->items()->where('product_id', $request->product_id)->delete();
-
-            // Clear the user's cart cache
-            cache()->forget('user_cart_items_' . Auth::id());
         } else {
             // Guest user - remove from session cart
             $cart = session()->get('cart', []);
@@ -219,10 +265,7 @@ class CartController extends Controller
             session()->put('cart', $cart);
         }
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Item removed from cart'
-        ]);
+        return back()->with('success', 'Item removed from cart');
     }
 
     /**
