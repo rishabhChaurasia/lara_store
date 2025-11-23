@@ -43,6 +43,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
             Route::get('/', [App\Http\Controllers\Admin\MarketingController::class, 'reportsIndex'])->name('index');
             Route::get('/stock', [App\Http\Controllers\Admin\MarketingController::class, 'stockReport'])->name('stock');
             Route::get('/sales-data', [App\Http\Controllers\Admin\MarketingController::class, 'salesReportData'])->name('salesData');
+            Route::get('/conversion-rate', [App\Http\Controllers\Admin\MarketingController::class, 'conversionRate'])->name('conversionRate');
             Route::get('/stock-data', [App\Http\Controllers\Admin\MarketingController::class, 'stockReportData'])->name('stockData');
         });
 

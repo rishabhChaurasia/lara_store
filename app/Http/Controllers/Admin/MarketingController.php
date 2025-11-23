@@ -281,33 +281,92 @@ class MarketingController extends Controller
         $start_date = $request->get('start_date');
         $end_date = $request->get('end_date');
 
-        // This would typically contain complex queries to get sales data
-        $salesData = [];
-        $topProducts = [];
+        $query = \App\Models\Order::query();
+
+        // Filter by date range if provided
+        if ($start_date && $end_date) {
+            $query->whereBetween('created_at', [$start_date, $end_date]);
+        } elseif ($start_date) {
+            $query->whereDate('created_at', '>=', $start_date);
+        } elseif ($end_date) {
+            $query->whereDate('created_at', '<=', $end_date);
+        }
+
+        // Filter by status (only completed orders count as sales)
+        $query->whereIn('status', ['processing', 'shipped', 'delivered']);
 
         if ($period === 'daily') {
-            // Get daily sales report logic
-            $salesData = [
-                ['date' => now()->format('Y-m-d'), 'total' => 125000], // Example data
-                ['date' => now()->subDay()->format('Y-m-d'), 'total' => 98000],
-            ];
+            // Group by day for daily report
+            $salesData = $query
+                ->selectRaw('DATE(created_at) as date, SUM(grand_total) as total')
+                ->groupBy('date')
+                ->orderBy('date', 'desc')
+                ->limit(30) // Last 30 days
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'date' => $item->date,
+                        'total' => $item->total / 100 // Convert from cents to dollars
+                    ];
+                })
+                ->values()
+                ->toArray();
         } else {
-            // Monthly sales report
-            $salesData = [
-                ['month' => now()->format('Y-m'), 'total' => 325000], // Example data
-                ['month' => now()->subMonth()->format('Y-m'), 'total' => 287000],
-            ];
+            // Monthly report
+            $salesData = $query
+                ->selectRaw('DATE_FORMAT(created_at, "%Y-%m") as month, SUM(grand_total) as total')
+                ->groupBy('month')
+                ->orderBy('month', 'desc')
+                ->limit(12) // Last 12 months
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'month' => $item->month,
+                        'total' => $item->total / 100 // Convert from cents to dollars
+                    ];
+                })
+                ->values()
+                ->toArray();
         }
 
         // Get top selling products
-        $topProducts = [
-            ['name' => 'Sample Product 1', 'quantity' => 45],
-            ['name' => 'Sample Product 2', 'quantity' => 32],
-        ];
+        $orderItems = \DB::table('order_items')
+            ->join('orders', 'order_items.order_id', '=', 'orders.id')
+            ->join('products', 'order_items.product_id', '=', 'products.id')
+            ->select('products.name', \DB::raw('SUM(order_items.quantity) as total_quantity'), \DB::raw('SUM(order_items.quantity * order_items.unit_price) as total_revenue'))
+            ->where('orders.status', 'delivered') // Only count delivered orders
+            ->groupBy('products.id', 'products.name')
+            ->orderBy('total_quantity', 'desc')
+            ->limit(10) // Top 10 selling products
+            ->get();
+
+        $topProducts = $orderItems->map(function ($item) {
+            return [
+                'name' => $item->name,
+                'quantity' => $item->total_quantity,
+                'revenue' => $item->total_revenue / 100 // Convert from cents to dollars
+            ];
+        })->values()->toArray();
 
         return response()->json([
             'sales_data' => $salesData,
             'top_products' => $topProducts,
+        ]);
+    }
+
+    public function conversionRate()
+    {
+        // Calculate conversion rate: (completed orders / total visitors) * 100
+        // Since we don't track visitors in this basic implementation, I'll calculate
+        // the ratio of completed orders to total orders as a proxy
+
+        $totalOrders = \App\Models\Order::count();
+        $completedOrders = \App\Models\Order::whereIn('status', ['processing', 'shipped', 'delivered'])->count();
+
+        $conversionRate = $totalOrders > 0 ? ($completedOrders / $totalOrders) * 100 : 0;
+
+        return response()->json([
+            'conversion_rate' => number_format($conversionRate, 2)
         ]);
     }
 }

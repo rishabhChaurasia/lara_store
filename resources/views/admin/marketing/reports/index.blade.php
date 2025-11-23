@@ -8,17 +8,17 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <div class="bg-white p-6 rounded-lg shadow">
             <h3 class="text-lg font-semibold text-gray-700 mb-2">Total Revenue</h3>
-            <p class="text-3xl font-bold text-indigo-600">$12,450.00</p>
+            <p class="text-3xl font-bold text-indigo-600">$0.00</p>
             <p class="text-sm text-gray-500 mt-1">Last 30 days</p>
         </div>
         <div class="bg-white p-6 rounded-lg shadow">
             <h3 class="text-lg font-semibold text-gray-700 mb-2">Orders</h3>
-            <p class="text-3xl font-bold text-indigo-600">124</p>
+            <p class="text-3xl font-bold text-indigo-600">0</p>
             <p class="text-sm text-gray-500 mt-1">Last 30 days</p>
         </div>
         <div class="bg-white p-6 rounded-lg shadow">
             <h3 class="text-lg font-semibold text-gray-700 mb-2">Conversion Rate</h3>
-            <p class="text-3xl font-bold text-indigo-600">3.2%</p>
+            <p class="text-3xl font-bold text-indigo-600">0.0%</p>
             <p class="text-sm text-gray-500 mt-1">Last 30 days</p>
         </div>
     </div>
@@ -30,9 +30,7 @@
             <div class="flex flex-wrap gap-3">
                 <select id="report-period" class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                     <option value="daily">Daily</option>
-                    <option value="weekly">Weekly</option>
                     <option value="monthly" selected>Monthly</option>
-                    <option value="yearly">Yearly</option>
                 </select>
                 <input type="date" id="start-date" class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                 <input type="date" id="end-date" class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
@@ -41,7 +39,7 @@
                 </button>
             </div>
         </div>
-        
+
         <!-- Chart placeholder -->
         <div class="h-80 bg-gray-50 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
             <canvas id="salesChart" class="w-full h-full"></canvas>
@@ -80,41 +78,13 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
+                    <tbody class="bg-white divide-y divide-gray-200" id="top-selling-table-body">
                         <tr>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">Wireless Headphones</div>
+                                <div class="text-sm font-medium text-gray-900">Loading...</div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">45</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">$1,350.00</td>
-                        </tr>
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">Smart Watch</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">32</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">$1,280.00</td>
-                        </tr>
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">Phone Case</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">28</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">$560.00</td>
-                        </tr>
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">Bluetooth Speaker</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">22</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">$880.00</td>
-                        </tr>
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">Laptop Stand</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">19</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">$570.00</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">0</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">$0.00</td>
                         </tr>
                     </tbody>
                 </table>
@@ -194,43 +164,164 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const ctx = document.getElementById('salesChart').getContext('2d');
+        let salesChart;
+        let currentPeriod = 'monthly';
+        let startDate = '';
+        let endDate = '';
 
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                datasets: [{
-                    label: 'Monthly Sales',
-                    data: [12000, 19000, 15000, 18000, 22000, 17000, 20000, 25000, 23000, 21000, 26000, 30000],
-                    borderColor: 'rgb(99, 102, 241)',
-                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'Monthly Sales Trend'
-                    }
+        // Function to fetch sales data
+        function fetchSalesData() {
+            // Show loading state for totals
+            document.querySelector('.bg-white.p-6.rounded-lg.shadow:first-child p.text-3xl').textContent = 'Loading...';
+            document.querySelector('.bg-white.p-6.rounded-lg.shadow:nth-child(2) p.text-3xl').textContent = 'Loading...';
+
+            fetch(`/admin/marketing/reports/sales-data?period=${currentPeriod}&start_date=${startDate}&end_date=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    updateTotals(data);
+                    updateSalesChart(data);
+                    updateTopSellingProducts(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching sales data:', error);
+                });
+        }
+
+        // Function to update totals
+        async function updateTotals(data) {
+            // Calculate total revenue from sales data
+            let totalRevenue = 0;
+            data.sales_data.forEach(item => {
+                totalRevenue += item.total || 0;
+            });
+
+            // Count orders based on sales data
+            let orderCount = data.sales_data.length;
+
+            // Update total revenue
+            document.querySelector('.bg-white.p-6.rounded-lg.shadow:first-child p.text-3xl').textContent = '$' + totalRevenue.toFixed(2);
+
+            // Update order count
+            document.querySelector('.bg-white.p-6.rounded-lg.shadow:nth-child(2) p.text-3xl').textContent = orderCount;
+
+            // Calculate and update conversion rate
+            try {
+                const response = await fetch('/admin/marketing/reports/conversion-rate');
+                if (response.ok) {
+                    const conversionData = await response.json();
+                    document.querySelector('.bg-white.p-6.rounded-lg.shadow:nth-child(3) p.text-3xl').textContent = conversionData.conversion_rate + '%';
+                } else {
+                    document.querySelector('.bg-white.p-6.rounded-lg.shadow:nth-child(3) p.text-3xl').textContent = '0.0%';
+                }
+            } catch (error) {
+                document.querySelector('.bg-white.p-6.rounded-lg.shadow:nth-child(3) p.text-3xl').textContent = '0.0%';
+            }
+        }
+
+        // Function to update sales chart
+        function updateSalesChart(data) {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+
+            // Destroy existing chart if it exists
+            if (salesChart) {
+                salesChart.destroy();
+            }
+
+            let labels = [];
+            let values = [];
+
+            if (currentPeriod === 'daily') {
+                data.sales_data.forEach(item => {
+                    labels.push(item.date);
+                    values.push(item.total);
+                });
+            } else {
+                data.sales_data.forEach(item => {
+                    labels.push(item.month);
+                    values.push(item.total);
+                });
+            }
+
+            salesChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: currentPeriod === 'daily' ? 'Daily Sales' : 'Monthly Sales',
+                        data: values,
+                        borderColor: 'rgb(99, 102, 241)',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return '$' + value.toLocaleString();
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: currentPeriod === 'daily' ? 'Daily Sales Trend' : 'Monthly Sales Trend'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
                             }
                         }
                     }
                 }
+            });
+        }
+
+        // Function to update top selling products
+        function updateTopSellingProducts(data) {
+            const tbody = document.getElementById('top-selling-table-body');
+            tbody.innerHTML = '';
+
+            if (data.top_products.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500" colspan="3">
+                            No top selling products data available
+                        </td>
+                    </tr>
+                `;
+                return;
             }
+
+            data.top_products.forEach(product => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${product.name}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.quantity}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">$${product.revenue.toFixed(2)}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Event listeners for filters
+        document.getElementById('report-period').addEventListener('change', function() {
+            currentPeriod = this.value;
+            fetchSalesData();
         });
+
+        document.getElementById('apply-filters').addEventListener('click', function() {
+            startDate = document.getElementById('start-date').value;
+            endDate = document.getElementById('end-date').value;
+            fetchSalesData();
+        });
+
+        // Initialize the charts with default data
+        fetchSalesData();
     });
 </script>
 @endsection
