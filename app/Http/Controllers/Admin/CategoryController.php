@@ -40,7 +40,11 @@ class CategoryController extends Controller
             $data['image_path'] = $request->file('image_path')->store('categories', 'public');
         }
 
-        $data['slug'] = Str::slug($data['name']); // Generate slug from name
+        // Explicitly set is_active based on checkbox presence
+        $data['is_active'] = $request->has('is_active') ? 1 : 0;
+
+        // Generate slug from name and ensure uniqueness
+        $data['slug'] = $this->generateUniqueSlug($data['name']);
 
         Category::create($data);
 
@@ -86,7 +90,16 @@ class CategoryController extends Controller
             $data['image_path'] = $category->image_path;
         }
 
-        $data['slug'] = Str::slug($data['name']); // Update slug from name
+        // Explicitly set is_active based on checkbox presence
+        $data['is_active'] = $request->has('is_active') ? 1 : 0;
+
+        // Update slug from name only if name has changed
+        if (isset($data['name']) && $data['name'] !== $category->name) {
+            $data['slug'] = $this->generateUniqueSlug($data['name'], $category->id);
+        } else {
+            // Keep the existing slug if name hasn't changed
+            $data['slug'] = $category->slug;
+        }
 
         $category->update($data);
 
@@ -107,6 +120,19 @@ class CategoryController extends Controller
             Storage::disk('public')->delete($category->image_path);
         }
 
+        // Delete all child categories (recursive deletion)
+        $category->children()->delete();
+
+        // Optionally, handle products associated with this category
+        // If products should not be deleted when category is deleted, just remove the category association
+        // $category->products()->update(['category_id' => null]);
+        // Or if products should be deleted with the category:
+        // $category->products()->delete();
+
+        // For this implementation, I'll assume products should have their category_id set to null
+        // rather than being deleted, but you can adjust based on your business logic
+        $category->products()->update(['category_id' => null]);
+
         $category->delete();
 
         // Clear related caches when deleting a category
@@ -114,5 +140,32 @@ class CategoryController extends Controller
         cache()->forget('all_categories');
 
         return redirect()->route('categories.index')->with('success', 'Category deleted successfully.');
+    }
+
+    /**
+     * Generate a unique slug for the category
+     */
+    private function generateUniqueSlug($name, $exceptId = null)
+    {
+        $baseSlug = Str::slug($name);
+        $slug = $baseSlug;
+        $count = 1;
+
+        // Check for existing slugs and add counter if needed
+        while (true) {
+            $query = Category::where('slug', $slug);
+            if ($exceptId) {
+                $query->where('id', '!=', $exceptId);
+            }
+
+            if (!$query->exists()) {
+                break;
+            }
+
+            $slug = $baseSlug . '-' . $count;
+            $count++;
+        }
+
+        return $slug;
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreCategoryRequest extends FormRequest
 {
@@ -21,12 +22,18 @@ class StoreCategoryRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        $isUpdate = $this->route('category'); // Check if this is an update request (has category parameter)
+
+        $rules = [
             'name' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'string', 'max:255', 'unique:categories,slug'],
             'image_path' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'], // Max 2MB image
             'is_active' => ['boolean'],
             'parent_id' => ['nullable', 'exists:categories,id'], // For nested categories
         ];
+
+        // We don't validate slug in form request since it's auto-generated in the controller
+        // The uniqueness will be handled in the controller for both create and update
+
+        return $rules;
     }
 }
