@@ -276,18 +276,18 @@
                                     <div class="flex flex-col gap-3 md:gap-4">
                                         <h4 class="font-bold text-gray-700 dark:text-gray-200 text-sm md:text-base">Customer Service</h4>
                                         <a href="{{ route('contact') }}" class="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition text-xs md:text-sm">Contact Us</a>
-                                        <a href="#" class="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition text-xs md:text-sm">Track Order</a>
-                                        <a href="#" class="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition text-xs md:text-sm">Returns</a>
+                                        <a href="{{ route('account.orders') }}" class="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition text-xs md:text-sm">Track Order</a>
+                                        <a href="{{ route('account.orders') }}" class="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition text-xs md:text-sm">Returns</a>
                                         <a href="{{ route('faq') }}" class="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition text-xs md:text-sm">FAQ</a>
                                     </div>
 
                                     <!-- Column 3 -->
                                     <div class="flex flex-col gap-3 md:gap-4 col-span-2 md:col-span-1">
                                         <h4 class="font-bold text-gray-700 dark:text-gray-200 text-sm md:text-base">Policies</h4>
-                                        <a href="#" class="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition text-xs md:text-sm">Privacy Policy</a>
-                                        <a href="#" class="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition text-xs md:text-sm">Terms of Service</a>
-                                        <a href="#" class="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition text-xs md:text-sm">Shipping Policy</a>
-                                        <a href="#" class="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition text-xs md:text-sm">Refund Policy</a>
+                                        <a href="{{ route('policies.show', 'privacy') }}" class="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition text-xs md:text-sm">Privacy Policy</a>
+                                        <a href="{{ route('policies.show', 'terms') }}" class="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition text-xs md:text-sm">Terms of Service</a>
+                                        <a href="{{ route('policies.show', 'shipping') }}" class="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition text-xs md:text-sm">Shipping Policy</a>
+                                        <a href="{{ route('policies.show', 'refund') }}" class="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition text-xs md:text-sm">Refund Policy</a>
                                     </div>
                                 </div>
 

@@ -10,6 +10,7 @@ use App\Http\Controllers\Shop\UserController;
 use App\Http\Controllers\Shop\CheckoutController;
 use App\Http\Controllers\FaqController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\PoliciesController;
 
 Route::get('/', [ShopController::class, 'index'])->name('home');
 
@@ -24,6 +25,9 @@ Route::get('/faq', [FaqController::class, 'index'])->name('faq');
 Route::get('/contact-us', [ContactController::class, 'index'])->name('contact');
 Route::post('/contact-us', [ContactController::class, 'send'])->name('contact.send');
 Route::get('/contact-us/thank-you', [ContactController::class, 'thankYou'])->name('contact.thank-you');
+
+// Policies pages
+Route::get('/policies/{policy}', [PoliciesController::class, 'show'])->name('policies.show');
 
 // Cart routes (requires auth)
 Route::middleware('auth')->group(function () {
