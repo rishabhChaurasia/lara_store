@@ -15,9 +15,15 @@
                 <a href="{{ route('admin.notifications.unread') }}" class="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 text-sm">
                     Unread Only
                 </a>
-                <a href="{{ route('admin.notifications.markAllAsRead') }}" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 text-sm">
-                    Mark All as Read
-                </a>
+                <form method="POST" action="{{ route('admin.notifications.markAllAsRead') }}" class="inline">
+                    @csrf
+                    @method('PUT')
+                    <button type="submit"
+                            onclick="return confirm('Are you sure you want to mark all notifications as read?')"
+                            class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 text-sm">
+                        Mark All as Read
+                    </button>
+                </form>
             </div>
         </div>
 
@@ -56,7 +62,7 @@
                                 {{ $notification->created_at->diffForHumans() }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
                                     {{ $notification->read_at ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' }}">
                                     {{ $notification->read_at ? 'Read' : 'Unread' }}
                                 </span>
@@ -64,16 +70,20 @@
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex justify-end space-x-2">
                                     @if(!$notification->read_at)
-                                        <a href="{{ route('admin.notifications.markAsRead', $notification->id) }}" class="text-blue-600 hover:text-blue-900">Mark Read</a>
+                                        <form method="POST" action="{{ route('admin.notifications.markAsRead', $notification->id) }}" class="inline">
+                                            @csrf
+                                            @method('PUT')
+                                            <button type="submit" class="text-blue-600 hover:text-blue-900">Mark Read</button>
+                                        </form>
                                     @endif
-                                    <a href="{{ isset($notification->data['order_id']) ? route('orders.show', $notification->data['order_id']) : '#' }}" 
+                                    <a href="{{ isset($notification->data['order_id']) ? route('orders.show', $notification->data['order_id']) : '#' }}"
                                        class="text-indigo-600 hover:text-indigo-900">
                                         View
                                     </a>
                                     <form method="POST" action="{{ route('admin.notifications.delete', $notification->id) }}" class="inline" onsubmit="return confirm('Are you sure you want to delete this notification?')">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="text-red-600 hover:text-red-900">Delete</button>
+                                        <button type="submit" class="text-red-600 hover:text-blue-900">Delete</button>
                                     </form>
                                 </div>
                             </td>

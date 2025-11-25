@@ -15,11 +15,13 @@ Route::get('/', [ShopController::class, 'index'])->name('home');
 Route::get('/shop', [ShopController::class, 'shop'])->name('shop.index');
 Route::get('/product/{product:slug}', [ProductController::class, 'show'])->name('product.show');
 
-// Cart routes (public)
-Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
-Route::patch('/cart/update', [CartController::class, 'update'])->name('cart.update');
-Route::delete('/cart/remove', [CartController::class, 'remove'])->name('cart.remove');
-Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+// Cart routes (requires auth)
+Route::middleware('auth')->group(function () {
+    Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
+    Route::patch('/cart/update', [CartController::class, 'update'])->name('cart.update');
+    Route::delete('/cart/remove', [CartController::class, 'remove'])->name('cart.remove');
+    Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+});
 
 // Wishlist routes (requires auth)
 Route::middleware('auth')->group(function () {
