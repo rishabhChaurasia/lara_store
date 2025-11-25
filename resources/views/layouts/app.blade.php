@@ -239,13 +239,13 @@
             
             <!-- Footer -->
             <!-- Footer -->
-            <footer class="bg-white dark:bg-dark-bg mt-auto py-4 md:py-6">
+            <footer class="bg-[#f9fafb] dark:bg-dark-bg mt-auto py-4 md:py-6">
                 <div class="w-full px-2 md:px-4">
-                    <div class="bg-[#101010] rounded-2xl md:rounded-[2rem] text-white p-6 md:p-12 lg:p-16 relative overflow-hidden">
+                    <div class="bg-[#eeeeee] dark:bg-[#101010] rounded-2xl md:rounded-[2rem] text-gray-900 dark:text-white p-6 md:p-12 lg:p-16 relative overflow-hidden">
                         <!-- Label -->
                         <div class="flex items-center gap-2 mb-8 md:mb-16">
                             <div class="w-2 h-2 rounded-full bg-red-500"></div>
-                            <span class="text-xs font-bold tracking-widest text-gray-400">FOOTER</span>
+                            <span class="text-xs font-bold tracking-widest text-gray-500 dark:text-gray-400">FOOTER</span>
                         </div>
 
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 lg:gap-24">
@@ -265,65 +265,67 @@
                                 <div class="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
                                     <!-- Column 1 -->
                                     <div class="flex flex-col gap-3 md:gap-4">
-                                        <h4 class="font-bold text-gray-200 text-sm md:text-base">Shop</h4>
-                                        <a href="{{ route('shop.index') }}" class="text-gray-400 hover:text-white transition text-xs md:text-sm">All Products</a>
-                                        <a href="{{ route('shop.index') }}" class="text-gray-400 hover:text-white transition text-xs md:text-sm">New Arrivals</a>
-                                        <a href="{{ route('shop.index') }}" class="text-gray-400 hover:text-white transition text-xs md:text-sm">Best Sellers</a>
-                                        <a href="{{ route('shop.index') }}" class="text-gray-400 hover:text-white transition text-xs md:text-sm">Sale</a>
+                                        <h4 class="font-bold text-gray-700 dark:text-gray-200 text-sm md:text-base">Shop</h4>
+                                        <a href="{{ route('shop.index') }}" class="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition text-xs md:text-sm">All Products</a>
+                                        <a href="{{ route('shop.index') }}" class="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition text-xs md:text-sm">New Arrivals</a>
+                                        <a href="{{ route('shop.index') }}" class="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition text-xs md:text-sm">Best Sellers</a>
+                                        <a href="{{ route('shop.index') }}" class="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition text-xs md:text-sm">Sale</a>
                                     </div>
 
                                     <!-- Column 2 -->
                                     <div class="flex flex-col gap-3 md:gap-4">
-                                        <h4 class="font-bold text-gray-200 text-sm md:text-base">Customer Service</h4>
-                                        <a href="{{ route('contact') }}" class="text-gray-400 hover:text-white transition text-xs md:text-sm">Contact Us</a>
-                                        <a href="#" class="text-gray-400 hover:text-white transition text-xs md:text-sm">Track Order</a>
-                                        <a href="#" class="text-gray-400 hover:text-white transition text-xs md:text-sm">Returns</a>
-                                        <a href="{{ route('faq') }}" class="text-gray-400 hover:text-white transition text-xs md:text-sm">FAQ</a>
+                                        <h4 class="font-bold text-gray-700 dark:text-gray-200 text-sm md:text-base">Customer Service</h4>
+                                        <a href="{{ route('contact') }}" class="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition text-xs md:text-sm">Contact Us</a>
+                                        <a href="#" class="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition text-xs md:text-sm">Track Order</a>
+                                        <a href="#" class="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition text-xs md:text-sm">Returns</a>
+                                        <a href="{{ route('faq') }}" class="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition text-xs md:text-sm">FAQ</a>
                                     </div>
 
                                     <!-- Column 3 -->
                                     <div class="flex flex-col gap-3 md:gap-4 col-span-2 md:col-span-1">
-                                        <h4 class="font-bold text-gray-200 text-sm md:text-base">Policies</h4>
-                                        <a href="#" class="text-gray-400 hover:text-white transition text-xs md:text-sm">Privacy Policy</a>
-                                        <a href="#" class="text-gray-400 hover:text-white transition text-xs md:text-sm">Terms of Service</a>
-                                        <a href="#" class="text-gray-400 hover:text-white transition text-xs md:text-sm">Shipping Policy</a>
-                                        <a href="#" class="text-gray-400 hover:text-white transition text-xs md:text-sm">Refund Policy</a>
+                                        <h4 class="font-bold text-gray-700 dark:text-gray-200 text-sm md:text-base">Policies</h4>
+                                        <a href="#" class="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition text-xs md:text-sm">Privacy Policy</a>
+                                        <a href="#" class="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition text-xs md:text-sm">Terms of Service</a>
+                                        <a href="#" class="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition text-xs md:text-sm">Shipping Policy</a>
+                                        <a href="#" class="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition text-xs md:text-sm">Refund Policy</a>
                                     </div>
                                 </div>
 
                                 <!-- Bottom Actions -->
-                                <div class="flex flex-col md:flex-row justify-between items-center md:items-end gap-6 md:gap-8 mt-6 md:mt-8 border-t border-gray-800 pt-6 md:pt-8">
+                                <div class="flex flex-col md:flex-row justify-between items-center md:items-end gap-6 md:gap-8 mt-6 md:mt-8 border-t border-gray-300 dark:border-gray-800 pt-6 md:pt-8">
                                     <!-- Theme Toggle -->
-                                    <div class="bg-gray-900 rounded-full p-1 flex items-center border border-gray-800">
+                                    <div class="bg-gray-200 dark:bg-[#020303] rounded-full p-1 flex items-center border border-gray-300 dark:border-gray-800">
                                         <!-- Light Mode -->
                                         <button @click="setTheme('light')" 
-                                                :class="theme === 'light' ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-white'"
-                                                class="p-2 rounded-full transition-all duration-200">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                                                :class="theme === 'light' ? 'bg-white text-black shadow-sm px-3 py-1.5' : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white p-2'"
+                                                class="rounded-full transition-all duration-200 flex items-center gap-2">
+                                            <svg class="w-4 h-4" :class="theme === 'light' ? 'w-3 h-3' : 'w-4 h-4'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                                            <span x-show="theme === 'light'" class="text-xs font-bold">LIGHT</span>
                                         </button>
                                         
                                         <!-- Dark Mode -->
                                         <button @click="setTheme('dark')" 
-                                                :class="theme === 'dark' ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-white'"
-                                                class="p-2 rounded-full transition-all duration-200">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                                                :class="theme === 'dark' ? 'bg-white text-black shadow-sm px-3 py-1.5' : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white p-2'"
+                                                class="rounded-full transition-all duration-200 flex items-center gap-2">
+                                            <svg class="w-4 h-4" :class="theme === 'dark' ? 'w-3 h-3' : 'w-4 h-4'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                                            <span x-show="theme === 'dark'" class="text-xs font-bold">DARK</span>
                                         </button>
 
                                         <!-- System Mode -->
                                         <button @click="setTheme('system')" 
-                                                :class="theme === 'system' ? 'bg-white text-black' : 'text-gray-400 hover:text-white'"
-                                                class="px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-all duration-200">
+                                                :class="theme === 'system' ? 'bg-white text-black shadow-sm px-3 py-1.5' : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white p-2'"
+                                                class="rounded-full transition-all duration-200 flex items-center gap-2">
                                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                                            SYSTEM
+                                            <span x-show="theme === 'system'" class="text-xs font-bold">SYSTEM</span>
                                         </button>
                                     </div>
 
                                     <!-- Copyright & Socials -->
                                     <div class="text-center md:text-right w-full md:w-auto">
-                                        <div class="flex gap-3 md:gap-4 justify-center md:justify-end mb-2 text-gray-400 text-xs md:text-sm">
-                                            <a href="#" class="hover:text-white transition">X (Twitter)</a>
-                                            <a href="#" class="hover:text-white transition">LinkedIn</a>
-                                            <a href="#" class="hover:text-white transition">GitHub</a>
+                                        <div class="flex gap-3 md:gap-4 justify-center md:justify-end mb-2 text-gray-600 dark:text-gray-400 text-xs md:text-sm">
+                                            <a href="#" class="hover:text-black dark:hover:text-white transition">X (Twitter)</a>
+                                            <a href="#" class="hover:text-black dark:hover:text-white transition">LinkedIn</a>
+                                            <a href="#" class="hover:text-black dark:hover:text-white transition">GitHub</a>
                                         </div>
                                         <p class="text-gray-500 text-xs md:text-sm">@ {{ date('Y') }} {{ config('app.name', 'LaraStore') }}. All rights reserved.</p>
                                     </div>
