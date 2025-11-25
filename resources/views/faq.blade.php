@@ -89,11 +89,9 @@
                     <p class="text-gray-600 dark:text-gray-300 mb-8 text-lg max-w-xl mx-auto">
                         Can't find the answer you're looking for? Our friendly customer support team is ready to help.
                     </p>
-                    <a href="mailto:support{{ '@' }}{{ strtolower(config('app.name')) }}.com" 
-                       class="inline-flex items-center gap-2 bg-black dark:bg-white text-white dark:text-black px-8 py-4  font-medium transition-colors duration-200 rounded-xl">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                        </svg>
+                    <a href="{{ route('contact') }}" 
+                       class="inline-flex items-center gap-2 bg-black dark:bg-white text-white dark:text-black px-8 py-3  font-medium transition-colors duration-200 rounded-3xl">
+                       
                         Contact Support
                     </a>
                 </div>
