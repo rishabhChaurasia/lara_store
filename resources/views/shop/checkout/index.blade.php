@@ -5,15 +5,9 @@
 @section('content')
 <main class="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
     @php
-        $cartTotal = 0;
-        foreach($cartItems as $item) {
-            $price = $item->product ? $item->product->price : $item->price;
-            $cartTotal += $price * $item->quantity;
-        }
         $shipping = 500; // $5.00 in cents
-        $tax = (int)($cartTotal * 0.0825); // 8.25% tax
-        $discount = 0; // No discount for now
-        $grandTotal = $cartTotal + $shipping + $tax - $discount;
+        $tax = (int)($finalTotal * 0.0825); // 8.25% tax (using final total after coupon)
+        $grandTotal = $finalTotal + $shipping + $tax;
     @endphp
     
     <div class="flex flex-col gap-8">
@@ -112,6 +106,12 @@
                                 <p class="text-gray-500 dark:text-gray-400">Subtotal</p>
                                 <p class="text-slate-800 dark:text-gray-200 font-medium">${{ number_format($cartTotal / 100, 2) }}</p>
                             </div>
+                            @if($appliedCoupon)
+                                <div class="flex justify-between text-sm text-green-600 dark:text-green-400">
+                                    <p>Coupon ({{ $appliedCoupon->code }})</p>
+                                    <p class="font-medium">-${{ number_format($discountAmount / 100, 2) }}</p>
+                                </div>
+                            @endif
                             <div class="flex justify-between text-sm">
                                 <p class="text-gray-500 dark:text-gray-400">Shipping</p>
                                 <p class="text-slate-800 dark:text-gray-200 font-medium">${{ number_format($shipping / 100, 2) }}</p>
@@ -120,12 +120,6 @@
                                 <p class="text-gray-500 dark:text-gray-400">Taxes</p>
                                 <p class="text-slate-800 dark:text-gray-200 font-medium">${{ number_format($tax / 100, 2) }}</p>
                             </div>
-                            @if($discount > 0)
-                                <div class="flex justify-between text-sm text-green-600 dark:text-green-400">
-                                    <p>Discount</p>
-                                    <p class="font-medium">-${{ number_format($discount / 100, 2) }}</p>
-                                </div>
-                            @endif
                             <div class="border-t border-gray-200 dark:border-zinc-800 pt-4 mt-4 flex justify-between text-base font-bold text-slate-800 dark:text-white">
                                 <p>Grand Total</p>
                                 <p>${{ number_format($grandTotal / 100, 2) }}</p>

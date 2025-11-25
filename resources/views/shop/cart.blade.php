@@ -176,22 +176,46 @@
                                 </div>
                             </div>
                             
+                            <!-- Show applied coupon details -->
+                            @if($appliedCoupon)
+                                <div class="flex justify-between items-center py-2 bg-green-50 dark:bg-green-900/20 rounded-lg px-3">
+                                    <div class="flex items-center">
+                                        <span class="text-green-800 dark:text-green-200 font-medium">Coupon ({{ $appliedCoupon->code }})</span>
+                                        <form method="POST" action="{{ route('cart.coupon.remove') }}" class="inline ml-2">
+                                            @csrf
+                                            <button type="submit" class="text-red-600 hover:text-red-800 text-sm">Remove</button>
+                                        </form>
+                                    </div>
+                                    <span class="text-green-800 dark:text-green-200 font-medium">- ${{ number_format($discountAmount / 100, 2) }}</span>
+                                </div>
+                            @endif
+
                             <div class="flex justify-between">
                                 <p class="text-slate-800 dark:text-white text-lg font-bold">Total</p>
-                                <p class="text-slate-800 dark:text-white text-lg font-bold">${{ number_format($cartTotal / 100, 2) }}</p>
+                                @if($appliedCoupon)
+                                    <div class="text-right">
+                                        <p class="text-gray-500 dark:text-gray-400 line-through text-sm">${{ number_format($cartTotal / 100, 2) }}</p>
+                                        <p class="text-slate-800 dark:text-white text-lg font-bold">${{ number_format($finalTotal / 100, 2) }}</p>
+                                    </div>
+                                @else
+                                    <p class="text-slate-800 dark:text-white text-lg font-bold">${{ number_format($finalTotal / 100, 2) }}</p>
+                                @endif
                             </div>
                             
                             <div class="flex flex-col gap-2">
                                 <label class="text-sm font-medium text-gray-500 dark:text-gray-400" for="promo-code">Promo Code</label>
-                                <div class="flex gap-2">
-                                    <input 
-                                        class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-slate-800 dark:text-white focus:outline-0 focus:ring-2 focus:ring-[#020202]/50 dark:focus:ring-white/50 border border-gray-300 dark:border-zinc-700 bg-transparent h-12 placeholder:text-gray-500 dark:placeholder:text-gray-400 px-4 text-base font-normal leading-normal" 
-                                        id="promo-code" 
-                                        placeholder="Enter code" 
+                                <form method="POST" action="{{ route('cart.coupon.apply') }}" id="coupon-form" class="flex gap-2">
+                                    @csrf
+                                    <input
+                                        class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-slate-800 dark:text-white focus:outline-0 focus:ring-2 focus:ring-[#020202]/50 dark:focus:ring-white/50 border border-gray-300 dark:border-zinc-700 bg-transparent h-12 placeholder:text-gray-500 dark:placeholder:text-gray-400 px-4 text-base font-normal leading-normal"
+                                        id="promo-code"
+                                        name="coupon_code"
+                                        placeholder="Enter code"
                                         type="text"
+                                        value="{{ old('coupon_code') }}"
                                     />
-                                    <button class="flex items-center justify-center rounded-xl h-12 bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 dark:hover:bg-zinc-700 text-slate-800 dark:text-white text-sm font-bold px-4 transition-colors whitespace-nowrap">Apply</button>
-                                </div>
+                                    <button type="submit" class="flex items-center justify-center rounded-xl h-12 bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 dark:hover:bg-zinc-700 text-slate-800 dark:text-white text-sm font-bold px-4 transition-colors whitespace-nowrap">Apply</button>
+                                </form>
                             </div>
                             
                             <div class="flex flex-col gap-3 pt-4">
@@ -229,7 +253,7 @@ function moveToWishlist(event, productId) {
     event.preventDefault();
     const wishlistForm = event.target;
     const removeForm = document.getElementById('remove-form-' + productId);
-    
+
     // Submit wishlist form
     fetch(wishlistForm.action, {
         method: 'POST',
@@ -247,8 +271,62 @@ function moveToWishlist(event, productId) {
         }
     })
     .catch(err => console.error('Error:', err));
-    
+
     return false;
 }
+
+// Handle coupon form submission with AJAX for better UX
+document.addEventListener('DOMContentLoaded', function() {
+    const couponForm = document.getElementById('coupon-form');
+    if (couponForm) {
+        couponForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(couponForm);
+            const couponCode = formData.get('coupon_code');
+
+            if (!couponCode) {
+                alert('Please enter a coupon code.');
+                return;
+            }
+
+            // Disable button during submission
+            const submitButton = couponForm.querySelector('button[type="submit"]');
+            const originalText = submitButton.textContent;
+            submitButton.textContent = 'Applying...';
+            submitButton.disabled = true;
+
+            fetch(couponForm.action, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json',
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Re-enable button
+                submitButton.textContent = originalText;
+                submitButton.disabled = false;
+
+                // Check for errors
+                if (data.errors) {
+                    // Show validation errors
+                    alert(Object.values(data.errors).flat().join('\n'));
+                } else {
+                    // Reload the page to show updated cart with coupon
+                    window.location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                submitButton.textContent = originalText;
+                submitButton.disabled = false;
+                alert('An error occurred while applying the coupon. Please try again.');
+            });
+        });
+    }
+});
 </script>
 @endsection

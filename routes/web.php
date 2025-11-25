@@ -21,6 +21,8 @@ Route::middleware('auth')->group(function () {
     Route::patch('/cart/update', [CartController::class, 'update'])->name('cart.update');
     Route::delete('/cart/remove', [CartController::class, 'remove'])->name('cart.remove');
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+    Route::post('/cart/apply-coupon', [CartController::class, 'applyCoupon'])->name('cart.coupon.apply');
+    Route::post('/cart/remove-coupon', [CartController::class, 'removeCoupon'])->name('cart.coupon.remove');
 });
 
 // Wishlist routes (requires auth)

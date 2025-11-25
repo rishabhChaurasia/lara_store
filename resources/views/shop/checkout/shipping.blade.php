@@ -193,8 +193,8 @@
                         
                         @php
                             $shipping = 500; // $5.00
-                            $tax = $cartTotal * 0.08; // 8% tax
-                            $total = $cartTotal + $shipping + $tax;
+                            $tax = $finalTotal * 0.08; // 8% tax (using final total after coupon)
+                            $total = $finalTotal + $shipping + $tax;
                         @endphp
 
                         <div class="border-t border-gray-200 dark:border-zinc-800 pt-6 space-y-3">
@@ -202,6 +202,12 @@
                                 <span>Subtotal</span>
                                 <span>${{ number_format($cartTotal / 100, 2) }}</span>
                             </div>
+                            @if($appliedCoupon)
+                                <div class="flex justify-between text-gray-600 dark:text-gray-300">
+                                    <span>Coupon ({{ $appliedCoupon->code }})</span>
+                                    <span class="text-green-600 dark:text-green-400">-${{ number_format($discountAmount / 100, 2) }}</span>
+                                </div>
+                            @endif
                             <div class="flex justify-between text-gray-600 dark:text-gray-300">
                                 <span>Shipping</span>
                                 <span>${{ number_format($shipping / 100, 2) }}</span>

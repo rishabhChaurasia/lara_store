@@ -27,6 +27,9 @@ class CheckoutController extends Controller
         $cartItems = collect();
         $cartTotal = 0;
         $cartCount = 0;
+        $appliedCoupon = null;
+        $discountAmount = 0;
+        $finalTotal = 0;
 
         if (Auth::check()) {
             // Authenticated user - get from database
@@ -51,7 +54,37 @@ class CheckoutController extends Controller
             $cartCount += $quantity;
         }
 
-        return view('shop.checkout.index', compact('cartItems', 'cartTotal', 'cartCount'));
+        // Apply coupon if exists
+        $appliedCouponCode = session('applied_coupon');
+        if ($appliedCouponCode) {
+            $coupon = \App\Models\Coupon::where('code', $appliedCouponCode)->first();
+            if ($coupon && $coupon->isValid()) {
+                $discount = 0;
+                if ($coupon->type === 'percentage') {
+                    $discount = ($cartTotal * $coupon->value) / 100;
+                } elseif ($coupon->type === 'fixed') {
+                    $discount = min($coupon->value, $cartTotal); // Can't discount more than the total
+                }
+                $discount = min($discount, $cartTotal); // Ensure discount doesn't exceed total
+                $finalTotal = $cartTotal - $discount;
+                $discountAmount = $discount;
+                $appliedCoupon = $coupon;
+            } else {
+                session()->forget('applied_coupon');
+                $finalTotal = $cartTotal;
+            }
+        } else {
+            $finalTotal = $cartTotal;
+        }
+
+        return view('shop.checkout.index', compact(
+            'cartItems',
+            'cartTotal',
+            'cartCount',
+            'finalTotal',
+            'discountAmount',
+            'appliedCoupon'
+        ));
     }
 
     /**
@@ -60,10 +93,10 @@ class CheckoutController extends Controller
     public function shipping()
     {
         $user = Auth::user();
-        
+
         // Get cart items to verify we have items to checkout
         $cartItems = $this->getCartItems();
-        
+
         if ($cartItems->isEmpty()) {
             return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
         }
@@ -76,7 +109,32 @@ class CheckoutController extends Controller
             $cartTotal += $price * $quantity;
         }
 
-        return view('shop.checkout.shipping', compact('user', 'cartItems', 'cartTotal'));
+        // Apply coupon if exists
+        $appliedCouponCode = session('applied_coupon');
+        $appliedCoupon = null;
+        $discountAmount = 0;
+        $finalTotal = $cartTotal;
+
+        if ($appliedCouponCode) {
+            $coupon = \App\Models\Coupon::where('code', $appliedCouponCode)->first();
+            if ($coupon && $coupon->isValid()) {
+                $discount = 0;
+                if ($coupon->type === 'percentage') {
+                    $discount = ($cartTotal * $coupon->value) / 100;
+                } elseif ($coupon->type === 'fixed') {
+                    $discount = min($coupon->value, $cartTotal); // Can't discount more than the total
+                }
+                $discount = min($discount, $cartTotal); // Ensure discount doesn't exceed total
+                $finalTotal = $cartTotal - $discount;
+                $discountAmount = $discount;
+                $appliedCoupon = $coupon;
+            } else {
+                session()->forget('applied_coupon');
+                $finalTotal = $cartTotal;
+            }
+        }
+
+        return view('shop.checkout.shipping', compact('user', 'cartItems', 'cartTotal', 'finalTotal', 'discountAmount', 'appliedCoupon'));
     }
 
     /**
@@ -137,7 +195,32 @@ class CheckoutController extends Controller
             $cartTotal += $price * $quantity;
         }
 
-        return view('shop.checkout.payment', compact('shippingInfo', 'cartItems', 'cartTotal'));
+        // Apply coupon if exists
+        $appliedCouponCode = session('applied_coupon');
+        $appliedCoupon = null;
+        $discountAmount = 0;
+        $finalTotal = $cartTotal;
+
+        if ($appliedCouponCode) {
+            $coupon = \App\Models\Coupon::where('code', $appliedCouponCode)->first();
+            if ($coupon && $coupon->isValid()) {
+                $discount = 0;
+                if ($coupon->type === 'percentage') {
+                    $discount = ($cartTotal * $coupon->value) / 100;
+                } elseif ($coupon->type === 'fixed') {
+                    $discount = min($coupon->value, $cartTotal); // Can't discount more than the total
+                }
+                $discount = min($discount, $cartTotal); // Ensure discount doesn't exceed total
+                $finalTotal = $cartTotal - $discount;
+                $discountAmount = $discount;
+                $appliedCoupon = $coupon;
+            } else {
+                session()->forget('applied_coupon');
+                $finalTotal = $cartTotal;
+            }
+        }
+
+        return view('shop.checkout.payment', compact('shippingInfo', 'cartItems', 'cartTotal', 'finalTotal', 'discountAmount', 'appliedCoupon'));
     }
 
     /**
@@ -183,13 +266,36 @@ class CheckoutController extends Controller
                         $orderTotal += $price * $quantity;
                     }
 
+                    // Apply coupon discount to order total if exists
+                    $appliedCouponCode = session('applied_coupon');
+                    $discountAmount = 0;
+                    $finalOrderTotal = $orderTotal;
+
+                    if ($appliedCouponCode) {
+                        $coupon = \App\Models\Coupon::where('code', $appliedCouponCode)->first();
+                        if ($coupon && $coupon->isValid()) {
+                            if ($coupon->type === 'percentage') {
+                                $discountAmount = ($orderTotal * $coupon->value) / 100;
+                            } elseif ($coupon->type === 'fixed') {
+                                $discountAmount = min($coupon->value, $orderTotal); // Can't discount more than the total
+                            }
+                            $discountAmount = min($discountAmount, $orderTotal); // Ensure discount doesn't exceed total
+                            $finalOrderTotal = $orderTotal - $discountAmount;
+
+                            // Update coupon usage count
+                            $coupon->increment('usage_count');
+                        }
+                    }
+
                     // Create the order
                     $order = Order::create([
                         'user_id' => Auth::check() ? Auth::id() : null,
                         'status' => 'processing', // Payment successful, so processing
                         'payment_status' => 'paid',
                         'payment_method' => $request->payment_method,
-                        'grand_total' => $orderTotal,
+                        'grand_total' => $finalOrderTotal,
+                        'discount_amount' => $discountAmount,
+                        'coupon_code' => $appliedCouponCode,
                         'shipping_address' => $shippingInfo,
                     ]);
 
@@ -217,6 +323,9 @@ class CheckoutController extends Controller
                     } else {
                         session()->forget('cart');
                     }
+
+                    // Clear applied coupon from session
+                    session()->forget('applied_coupon');
                 });
 
                 // Dispatch order confirmation email job to run in the background
@@ -248,13 +357,36 @@ class CheckoutController extends Controller
                     $orderTotal += $price * $quantity;
                 }
 
+                // Apply coupon discount to order total if exists
+                $appliedCouponCode = session('applied_coupon');
+                $discountAmount = 0;
+                $finalOrderTotal = $orderTotal;
+
+                if ($appliedCouponCode) {
+                    $coupon = \App\Models\Coupon::where('code', $appliedCouponCode)->first();
+                    if ($coupon && $coupon->isValid()) {
+                        if ($coupon->type === 'percentage') {
+                            $discountAmount = ($orderTotal * $coupon->value) / 100;
+                        } elseif ($coupon->type === 'fixed') {
+                            $discountAmount = min($coupon->value, $orderTotal); // Can't discount more than the total
+                        }
+                        $discountAmount = min($discountAmount, $orderTotal); // Ensure discount doesn't exceed total
+                        $finalOrderTotal = $orderTotal - $discountAmount;
+
+                        // Update coupon usage count
+                        $coupon->increment('usage_count');
+                    }
+                }
+
                 // Create the order
                 $order = Order::create([
                     'user_id' => Auth::check() ? Auth::id() : null,
                     'status' => 'pending', // Awaiting payment on delivery
                     'payment_status' => 'unpaid',
                     'payment_method' => $request->payment_method,
-                    'grand_total' => $orderTotal,
+                    'grand_total' => $finalOrderTotal,
+                    'discount_amount' => $discountAmount,
+                    'coupon_code' => $appliedCouponCode,
                     'shipping_address' => $shippingInfo,
                 ]);
 
@@ -282,6 +414,9 @@ class CheckoutController extends Controller
                 } else {
                     session()->forget('cart');
                 }
+
+                // Clear applied coupon from session
+                session()->forget('applied_coupon');
             });
 
             // Dispatch order confirmation email job to run in the background

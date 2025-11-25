@@ -20,6 +20,9 @@ class CartController extends Controller
         $cartItems = collect();
         $cartTotal = 0;
         $cartCount = 0;
+        $appliedCoupon = null;
+        $discountAmount = 0;
+        $finalTotal = 0;
 
         if (Auth::check()) {
             // Authenticated user - get from database
@@ -44,7 +47,25 @@ class CartController extends Controller
             $cartCount += $quantity;
         }
 
-        return view('shop.cart', compact('cartItems', 'cartTotal', 'cartCount'));
+        // Apply coupon if exists
+        $appliedCouponCode = session('applied_coupon');
+        if ($appliedCouponCode) {
+            $result = $this->applyCouponDiscount($cartTotal, $appliedCouponCode);
+            $finalTotal = $result['total'];
+            $discountAmount = $result['discount'];
+            $appliedCoupon = $result['coupon'] ?? null;
+        } else {
+            $finalTotal = $cartTotal;
+        }
+
+        return view('shop.cart', compact(
+            'cartItems',
+            'cartTotal',
+            'cartCount',
+            'finalTotal',
+            'discountAmount',
+            'appliedCoupon'
+        ));
     }
 
     /**
@@ -286,6 +307,107 @@ class CartController extends Controller
             }
             return $cartItems;
         }
+    }
+
+    /**
+     * Apply a coupon to the cart.
+     */
+    public function applyCoupon(Request $request)
+    {
+        $request->validate([
+            'coupon_code' => 'required|string|max:255'
+        ]);
+
+        $couponCode = strtoupper(trim($request->coupon_code));
+
+        // Find the coupon
+        $coupon = \App\Models\Coupon::where('code', $couponCode)->first();
+
+        if (!$coupon) {
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json(['errors' => ['coupon_code' => ['Invalid coupon code.']]], 422);
+            }
+            return back()->with('error', 'Invalid coupon code.');
+        }
+
+        if (!$coupon->isValid()) {
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json(['errors' => ['coupon_code' => ['This coupon is not valid or has expired.']]], 422);
+            }
+            return back()->with('error', 'This coupon is not valid or has expired.');
+        }
+
+        // Calculate cart total to check minimum amount requirement
+        $cartItems = $this->getCartItems();
+        $cartTotal = $this->getCartTotal($cartItems);
+
+        if ($coupon->min_amount && $cartTotal < $coupon->min_amount) {
+            $errorMessage = 'Coupon requires a minimum order amount of $' . number_format($coupon->min_amount / 100, 2) . '.';
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json(['errors' => ['coupon_code' => [$errorMessage]]], 422);
+            }
+            return back()->with('error', $errorMessage);
+        }
+
+        // Store coupon in session
+        session(['applied_coupon' => $coupon->code]);
+
+        if ($request->expectsJson() || $request->wantsJson()) {
+            return response()->json(['success' => 'Coupon applied successfully! You received a discount.']);
+        }
+        return back()->with('success', 'Coupon applied successfully! You received a discount.');
+    }
+
+    /**
+     * Remove coupon from the cart.
+     */
+    public function removeCoupon(Request $request)
+    {
+        session()->forget('applied_coupon');
+
+        if ($request->expectsJson() || $request->wantsJson()) {
+            return response()->json(['success' => 'Coupon removed from cart.']);
+        }
+        return back()->with('success', 'Coupon removed from cart.');
+    }
+
+    /**
+     * Apply coupon discount to cart total.
+     */
+    private function applyCouponDiscount($cartTotal, $couponCode)
+    {
+        if (!$couponCode) {
+            return ['total' => $cartTotal, 'discount' => 0];
+        }
+
+        $coupon = \App\Models\Coupon::where('code', $couponCode)->first();
+
+        if (!$coupon || !$coupon->isValid()) {
+            session()->forget('applied_coupon');
+            return ['total' => $cartTotal, 'discount' => 0];
+        }
+
+        $discount = 0;
+
+        if ($coupon->type === 'percentage') {
+            $discount = ($cartTotal * $coupon->value) / 100;
+        } elseif ($coupon->type === 'fixed') {
+            $discount = min($coupon->value, $cartTotal); // Can't discount more than the total
+        }
+
+        $discount = min($discount, $cartTotal); // Ensure discount doesn't exceed total
+        $newTotal = $cartTotal - $discount;
+
+        // Update coupon usage count
+        if (Auth::check()) {
+            $coupon->increment('usage_count');
+        }
+
+        return [
+            'total' => $newTotal,
+            'discount' => $discount,
+            'coupon' => $coupon
+        ];
     }
 
     /**

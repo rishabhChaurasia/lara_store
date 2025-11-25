@@ -30,6 +30,18 @@
                 <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Date</span>
                 <span class="text-sm font-medium text-gray-900 dark:text-white">{{ $order->created_at->format('M d, Y') }}</span>
             </div>
+            @if($order->coupon_code)
+                <div class="flex justify-between items-center">
+                    <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Coupon Used</span>
+                    <span class="text-sm font-bold text-green-600 dark:text-green-400">{{ $order->coupon_code }}</span>
+                </div>
+            @endif
+            @if($order->discount_amount > 0)
+                <div class="flex justify-between items-center">
+                    <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Discount Amount</span>
+                    <span class="text-sm font-bold text-green-600 dark:text-green-400">-${{ number_format($order->discount_amount / 100, 2) }}</span>
+                </div>
+            @endif
             <div class="flex justify-between items-center">
                 <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Amount</span>
                 <span class="text-sm font-bold text-gray-900 dark:text-white">${{ number_format($order->grand_total / 100, 2) }}</span>
