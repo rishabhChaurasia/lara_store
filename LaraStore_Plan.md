@@ -1,202 +1,124 @@
-# LaraStore: Comprehensive Project Plan & Architecture
+# Larastore Plan - Abandoned Cart Recovery Feature
 
-**Project Name:** LaraStore
-**Goal:** Build a robust, scalable e-commerce application using Laravel 11.
-**Complexity Level:** Intermediate/Advanced
-**Date:** November 22, 2025
+## Overview
+Implement an abandoned cart recovery system to re-engage customers who leave without completing their purchase. This feature will send automated email reminders to customers at predetermined intervals to encourage them to complete their purchase.
 
----
+## Business Value
+- Recover 10-30% of lost sales from cart abandonment (industry average is 70% abandonment rate)
+- Increase revenue with minimal additional cost
+- Improve customer experience by providing convenient reminders
+- Enhance customer retention through follow-up engagement
 
-## 1. Technical Stack & Requirements
+## Feature Requirements
 
-### Core Frameworks
-*   **Backend:** Laravel 11.x
-*   **Frontend:** Blade Templates (Server-Side Rendering)
-*   **Styling:** Tailwind CSS (Utility-first framework)
-*   **Interactivity:** Alpine.js (Lightweight JS for dropdowns, modals, cart toggles)
-*   **Database:** MySQL 8.0+ or PostgreSQL
+### 1. Cart Abandonment Detection
+- Track when a user adds items to cart but doesn't complete checkout
+- Record timestamp of last cart activity
+- Identify carts abandoned for more than 1 hour
 
-### Key Libraries
-*   **Authentication:** Laravel Breeze (Simple) or Jetstream (Advanced)
-*   **Payments:** Laravel Cashier (Stripe)
-*   **Media:** Spatie Media Library (optional) or standard Laravel Storage
-*   **Debugging:** Laravel Telescope (for local development)
+### 2. Scheduled Notifications
+- First reminder: 1 hour after abandonment
+- Second reminder: 24 hours after abandonment
+- Third reminder: 3 days after abandonment
+- Include personalized discount codes in later reminders
 
----
+### 3. Notification System
+- Automated email notifications
+- Personalized content with cart items
+- Clear call-to-action to resume checkout
+- Easy opt-out option
 
-## 2. Database Architecture (Schema)
+### 4. Admin Dashboard Integration
+- Track recovery statistics
+- Monitor conversion rates from abandoned cart emails
+- View opt-out rates
+- Ability to customize email templates
 
-### A. Users & Roles
-*   **`users`**:
-    *   `id`, `name`, `email`, `password`
-    *   `role`: `enum('admin', 'customer')` (default: 'customer')
-    *   `addresses`: JSON or separate table for shipping info.
+## Technical Implementation Plan
 
-### B. Product Catalog
-*   **`categories`**:
-    *   `id`, `name`, `slug` (unique), `image_path`, `is_active`
-    *   *Self-referencing parent_id for nested categories (optional).*
-*   **`products`**:
-    *   `id`, `category_id` (FK), `name`, `slug`, `description` (text)
-    *   `price`: `unsignedInteger` (Store in cents to avoid floating point errors)
-    *   `sale_price`: `unsignedInteger` (nullable)
-    *   `stock_quantity`: `integer`
-    *   `sku`: `string` (unique)
-    *   `is_active`: `boolean`
+### 1. Database Schema Updates
+- Add `abandoned_cart_notifications` table to track sent notifications
+- Add `remind_at` column to `carts` table to track when to send next reminder
+- Add `abandoned_at` column to `carts` table to track when cart was abandoned
 
-### C. Shopping & Orders
-*   **`orders`**:
-    *   `id`, `user_id` (FK, nullable for guest checkout)
-    *   `status`: `enum('pending', 'processing', 'shipped', 'delivered', 'cancelled')`
-    *   `payment_status`: `enum('unpaid', 'paid', 'refunded')`
-    *   `payment_method`: `string` (e.g., 'stripe', 'cod')
-    *   `grand_total`: `unsignedInteger`
-    *   `shipping_address`: `json` (Snapshot of address at time of order)
-*   **`order_items`**:
-    *   `id`, `order_id` (FK)
-    *   `product_id` (FK)
-    *   `quantity`: `integer`
-    *   `unit_price`: `unsignedInteger` (Snapshot of price at time of purchase - CRITICAL)
+### 2. Models
+- Create `AbandonedCartNotification` model
+- Extend `Cart` model to include abandonment tracking
 
-### D. User Personalization
-*   **`wishlists`**:
-    *   `id`, `user_id` (FK)
-    *   `product_id` (FK)
-    *   `created_at` (For "Added on" date)
+### 3. Jobs
+- Create `ProcessAbandonedCarts` job to run periodically
+- Create `SendAbandonedCartNotification` job for each notification
 
-### E. Cart & Checkout (Persistent)
-*   **`carts`**: `id`, `user_id` (nullable), `session_id` (string, index), `expires_at`
-*   **`cart_items`**: `id`, `cart_id`, `product_id`, `quantity`
-*   **`reviews`**:
-    *   `id`, `user_id`, `product_id`, `rating` (1-5), `comment`, `is_approved` (boolean)
+### 4. Queue System
+- Schedule job to run every 30 minutes to process abandoned carts
+- Use Laravel's queue system to handle notifications efficiently
 
-### F. Performance Optimization
-*   **`indexes`**:
-    *   `products`: `slug`, `category_id`
-    *   `orders`: `user_id`, `order_number`
-    *   `users`: `email`
+### 5. Notifications
+- Create new notification classes for each reminder type
+- Implement email templates for different reminder stages
 
----
+### 6. Admin Panel
+- Add "Abandoned Cart Recovery" section to admin dashboard
+- Show statistics: total abandoned carts, recovered carts, conversion rate
+- Allow admin to configure reminder intervals and templates
 
-## 3. Module Breakdown
+## Step-by-Step Implementation
 
-### Module 1: Admin Panel
-**Route Prefix:** `/admin`
-**Middleware:** `auth`, `admin`
-*   **Dashboard:** Show total sales, recent orders, low stock alerts.
-*   **Product Management:**
-    *   CRUD for Products and Categories.
-    *   Image Upload handling (store in `public/storage`).
-*   **Order Management:**
-    *   View order details.
-    *   Update Order Status (e.g., change 'Processing' to 'Shipped').
-*   **User Management:**
-    *   View all registered users.
-    *   View user order history.
-    *   Ban/Suspend users.
-*   **Marketing & Analytics:**
-    *   **Coupons:** Create discount codes (Fixed amount or %).
-    *   **Reports:** Sales charts (Daily/Monthly revenue), Top selling products.
+### Phase 1: Database & Models (Day 1)
+1. Create migration for `abandoned_cart_notifications` table
+2. Update `carts` table with necessary columns
+3. Create `AbandonedCartNotification` model
+4. Extend `Cart` model with abandonment tracking methods
 
-### Module 2: Public Storefront
-**Route Prefix:** `/`
-*   **Home:** Hero section, Featured Categories, New Arrivals.
-*   **Shop/Listing:**
-    *   Sidebar filters: Price Range, Categories.
-    *   Sorting: Price (Low-High), Newest.
-    *   Pagination (12 items per page).
-    *   **Wishlist Toggle:** Heart icon on product cards (AJAX).
-*   **Product Detail:**
-    *   Image Gallery.
-    *   "Add to Cart" button.
-    *   "Add to Wishlist" button.
-    *   **Product Reviews:** User ratings and comments section.
-    *   Related Products (Same category).
-*   **User Account:**
-    *   Order History.
-    *   My Wishlist Page.
+### Phase 2: Core Logic (Day 2)
+1. Implement logic to detect abandoned carts
+2. Create `ProcessAbandonedCarts` job
+3. Create `SendAbandonedCartNotification` job
+4. Set up cron job to run every 30 minutes
 
-### Module 3: Shopping Cart & System Logic
-*   **Storage Strategy:**
-    *   **Guest:** Store cart in `Session` or `Cookies`.
-    *   **User:** Store cart in Database (`carts` table).
-    *   **Merge:** On Login, merge Session cart into Database cart.
-*   **Features:**
-    *   Update Quantity (AJAX/Alpine.js recommended).
-    *   Remove Item.
-    *   Real-time total calculation.
-    *   **Stock Reservation:** Temporarily hold stock for 15 mins during checkout.
+### Phase 3: Notifications (Day 3)
+1. Create email notification classes
+2. Design email templates for different reminder stages
+3. Implement the ability to include discount codes in later emails
 
-### Module 4: Checkout & Payment
-*   **Step 1:** Guest Login / Register (Optional).
-*   **Step 2:** Shipping Information Form.
-*   **Step 3:** Payment (Stripe Integration).
-*   **Step 4:** Order Finalization.
-    *   **DB Transaction:**
-        1.  Create Order Record.
-        2.  Create Order Items.
-        3.  Decrement Product Stock.
-        4.  Clear Cart.
-        5.  **Notifications:**
-            *   Send "Order Received" Email to Customer (Queue).
-            *   Send "New Order" Notification to Admin (Database/Email).
+### Phase 4: Admin Interface (Day 4)
+1. Create admin page for abandoned cart statistics
+2. Add configuration options for reminder intervals
+3. Add email template customization
 
----
+### Phase 5: Testing & Optimization (Day 5)
+1. Write unit and integration tests
+2. Test email delivery and tracking
+3. Optimize queue processing performance
+4. A/B test different reminder intervals and content
 
-## 4. Development Roadmap (14-Day Plan)
+## Database Schema
 
-### Phase 1: Foundation & Schema (Days 1-2)
-1.  `laravel new lara-store` & Database Config.
-2.  **Schema & Migrations:** Create tables including `carts`, `reviews` and add Indexes.
-3.  **Models & Relations:** Define `hasMany`, `belongsTo` relationships.
-4.  **Validation Rules:** specific FormRequests for `StoreProductRequest`, `CheckoutRequest`.
+### AbandonedCartNotifications Table
+- id (primary key)
+- cart_id (foreign key to carts table)
+- user_id (foreign key to users table)
+- notification_type (first_reminder, second_reminder, third_reminder)
+- sent_at (timestamp)
+- opened_at (timestamp, nullable)
+- clicked_at (timestamp, nullable)
+- converted (boolean, default false)
 
-### Phase 2: The Admin Core (Days 3-5)
-1.  **Authentication:** Install Breeze/Jetstream.
-2.  **Admin Middleware** & Dashboard.
-3.  **Product Management:** CRUD with Image Upload (Spatie Media Library or native).
-4.  **Stock Management:** Basic inventory logic.
+### Carts Table Updates
+- abandoned_at (timestamp, nullable)
+- remind_at (timestamp, nullable)
+- notified_count (integer, default 0)
 
-### Phase 3: The Storefront & Engagement (Days 6-9)
-1.  **Layouts:** Main Shop UI (Grid/List).
-2.  **Product Details:** Show description, images, and **Reviews**.
-3.  **Cart System:** Implement persistent cart (DB + Session) and Merge logic.
-4.  **Wishlist:** Toggle functionality.
+## Expected Outcomes
+- 10-20% recovery rate of abandoned carts
+- 5-15% increase in overall revenue
+- Improved customer engagement
+- Better understanding of customer behavior patterns
 
-### Phase 4: Checkout & Logic (Days 10-12)
-1.  **Checkout Flow:** Address Form -> Payment -> Summary.
-2.  **Order Logic:** Database Transactions & Stock Reservation.
-3.  **Background Jobs:**
-    *   Setup Queue Worker (`database` or `redis`).
-    *   Create `OrderConfirmation` Email.
-    *   Create `AbandonedCart` Job (Draft).
-
-### Phase 5: Reliability & Polish (Days 13-14)
-1.  **Testing Strategy:**
-    *   Write Feature Test: `UserCanCheckoutTest`.
-    *   Write Unit Test: `CartCalculationTest`.
-2.  **Admin Notifications:** Ensure admins get alerted on new orders.
-3.  **Final Review:** Run `php artisan optimize`, check security headers.
-
----
-
-## 5. Directory Structure Best Practices
-Suggestion for organizing your logic:
-
-```
-app/
-  Services/
-    CartService.php       # Handles cart session logic
-    OrderService.php      # Handles order creation & stock deduction
-    PaymentService.php    # Wraps Stripe logic
-  Models/
-    Product.php
-    Order.php
-  Http/
-    Controllers/
-      Admin/
-        ProductController.php
-      Shop/
-        CartController.php
-        CheckoutController.php
-```
+## Success Metrics
+- Number of abandoned carts
+- Number of recovery emails sent
+- Email open rates
+- Click-through rates
+- Conversion rate from abandoned cart emails
+- Revenue generated from recovered carts
