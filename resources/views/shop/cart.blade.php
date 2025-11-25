@@ -110,12 +110,29 @@
                                 
                                 <!-- Actions -->
                                 <div class="flex items-center gap-4 bg-transparent min-h-14 justify-between mt-4 border-t border-gray-200 dark:border-zinc-800 pt-4">
-                                    <button class="flex items-center gap-2 text-slate-800 dark:text-white hover:text-zinc-600 dark:hover:text-zinc-400 transition-colors">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
-                                        </svg>
-                                        <p class="text-sm font-medium leading-normal">Move to Wishlist</p>
-                                    </button>
+                                    @auth
+                                        <form action="{{ route('wishlist.toggle', $item->product) }}" method="POST" class="inline" onsubmit="return moveToWishlist(event, {{ $item->product->id }})">
+                                            @csrf
+                                            <button type="submit" class="flex items-center gap-2 text-slate-800 dark:text-white hover:text-zinc-600 dark:hover:text-zinc-400 transition-colors">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                                                </svg>
+                                                <p class="text-sm font-medium leading-normal">Move to Wishlist</p>
+                                            </button>
+                                        </form>
+                                        <form id="remove-form-{{ $item->product->id }}" action="{{ route('cart.remove') }}" method="POST" style="display: none;">
+                                            @csrf
+                                            @method('DELETE')
+                                            <input type="hidden" name="product_id" value="{{ $item->product->id }}">
+                                        </form>
+                                    @else
+                                        <a href="{{ route('login') }}" class="flex items-center gap-2 text-slate-800 dark:text-white hover:text-zinc-600 dark:hover:text-zinc-400 transition-colors">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                                            </svg>
+                                            <p class="text-sm font-medium leading-normal">Move to Wishlist</p>
+                                        </a>
+                                    @endauth
                                     
                                     <form 
                                         action="{{ route('cart.remove') }}" 
@@ -206,4 +223,32 @@
         </div>
     @endif
 </div>
+
+<script>
+function moveToWishlist(event, productId) {
+    event.preventDefault();
+    const wishlistForm = event.target;
+    const removeForm = document.getElementById('remove-form-' + productId);
+    
+    // Submit wishlist form
+    fetch(wishlistForm.action, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Submit remove form to remove from cart
+            removeForm.submit();
+        }
+    })
+    .catch(err => console.error('Error:', err));
+    
+    return false;
+}
+</script>
 @endsection

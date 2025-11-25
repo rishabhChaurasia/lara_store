@@ -91,7 +91,7 @@
                                     </a>
                                     <p class="text-lg font-semibold text-gray-900 dark:text-white">${{ number_format($item->product->price / 100, 2) }}</p>
                                 </div>
-                                <form action="{{ route('cart.add') }}" method="POST" class="w-full">
+                                <form action="{{ route('cart.add') }}" method="POST" class="w-full" onsubmit="return moveToCart(event, {{ $item->product->id }})">
                                     @csrf
                                     <input type="hidden" name="product_id" value="{{ $item->product->id }}">
                                     <input type="hidden" name="quantity" value="1">
@@ -102,6 +102,10 @@
                                     >
                                         {{ $item->product->stock_quantity <= 0 ? 'Out of Stock' : 'Add to Cart' }}
                                     </button>
+                                </form>
+                                <form id="remove-wishlist-{{ $item->product->id }}" action="{{ route('wishlist.remove', $item->product) }}" method="POST" style="display: none;">
+                                    @csrf
+                                    @method('DELETE')
                                 </form>
                             </div>
                         </div>
@@ -130,4 +134,23 @@
         </div>
     </main>
 </div>
+
+<script>
+function moveToCart(event, productId) {
+    event.preventDefault();
+    const cartForm = event.target;
+    const removeForm = document.getElementById('remove-wishlist-' + productId);
+    
+    fetch(cartForm.action, {
+        method: 'POST',
+        body: new FormData(cartForm)
+    })
+    .then(() => {
+        removeForm.submit();
+    })
+    .catch(err => console.error('Error:', err));
+    
+    return false;
+}
+</script>
 @endsection
