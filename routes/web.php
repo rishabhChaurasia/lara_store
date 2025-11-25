@@ -8,12 +8,16 @@ use App\Http\Controllers\Shop\ProductController;
 use App\Http\Controllers\Shop\CartController;
 use App\Http\Controllers\Shop\UserController;
 use App\Http\Controllers\Shop\CheckoutController;
+use App\Http\Controllers\FaqController;
 
 Route::get('/', [ShopController::class, 'index'])->name('home');
 
 // Public shop routes
 Route::get('/shop', [ShopController::class, 'shop'])->name('shop.index');
 Route::get('/product/{product:slug}', [ProductController::class, 'show'])->name('product.show');
+
+// FAQ page
+Route::get('/faq', [FaqController::class, 'index'])->name('faq');
 
 // Cart routes (requires auth)
 Route::middleware('auth')->group(function () {

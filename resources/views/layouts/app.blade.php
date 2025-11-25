@@ -76,6 +76,9 @@
                                 <a href="{{ route('shop.index') }}" class="text-sm font-medium text-gray-500 hover:text-black transition-colors {{ request()->routeIs('shop.*') ? 'text-black dark:text-white' : 'dark:text-gray-400 dark:hover:text-white' }}">
                                     Shop
                                 </a>
+                                <a href="{{ route('faq') }}" class="text-sm font-medium text-gray-500 hover:text-black transition-colors {{ request()->routeIs('faq') ? 'text-black dark:text-white' : 'dark:text-gray-400 dark:hover:text-white' }}">
+                                    FAQ
+                                </a>
                             </div>
                         </div>
 
@@ -177,6 +180,9 @@
                         <a href="{{ route('shop.index') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-black hover:bg-gray-50 transition {{ request()->routeIs('shop.*') ? 'bg-gray-50 text-black dark:bg-gray-900 dark:text-white' : 'dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-900' }}">
                             Shop
                         </a>
+                        <a href="{{ route('faq') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-black hover:bg-gray-50 transition {{ request()->routeIs('faq') ? 'bg-gray-50 text-black dark:bg-gray-900 dark:text-white' : 'dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-900' }}">
+                            FAQ
+                        </a>
 
                         @auth
                             <div class="border-t border-gray-100 mt-4 pt-4 dark:border-gray-800">
@@ -272,7 +278,7 @@
                                         <a href="#" class="text-gray-400 hover:text-white transition text-xs md:text-sm">Contact Us</a>
                                         <a href="#" class="text-gray-400 hover:text-white transition text-xs md:text-sm">Track Order</a>
                                         <a href="#" class="text-gray-400 hover:text-white transition text-xs md:text-sm">Returns</a>
-                                        <a href="#" class="text-gray-400 hover:text-white transition text-xs md:text-sm">FAQ</a>
+                                        <a href="{{ route('faq') }}" class="text-gray-400 hover:text-white transition text-xs md:text-sm">FAQ</a>
                                     </div>
 
                                     <!-- Column 3 -->
