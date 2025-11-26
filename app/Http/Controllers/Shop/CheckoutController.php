@@ -287,13 +287,18 @@ class CheckoutController extends Controller
                         }
                     }
 
+                    // Apply tax calculation like in the view and createPaymentIntent method
+                    $shipping = 500; // $5.00
+                    $tax = $finalOrderTotal * 0.08; // 8% tax (using final total after coupon)
+                    $totalWithTaxAndShipping = $finalOrderTotal + $shipping + $tax;
+
                     // Create the order
                     $order = Order::create([
                         'user_id' => Auth::check() ? Auth::id() : null,
                         'status' => 'processing', // Payment successful, so processing
                         'payment_status' => 'paid',
                         'payment_method' => $request->payment_method,
-                        'grand_total' => $finalOrderTotal,
+                        'grand_total' => $totalWithTaxAndShipping,
                         'discount_amount' => $discountAmount,
                         'coupon_code' => $appliedCouponCode,
                         'shipping_address' => $shippingInfo,
@@ -378,13 +383,18 @@ class CheckoutController extends Controller
                     }
                 }
 
+                // Apply tax calculation like in the view and createPaymentIntent method
+                $shipping = 500; // $5.00
+                $tax = $finalOrderTotal * 0.08; // 8% tax (using final total after coupon)
+                $totalWithTaxAndShipping = $finalOrderTotal + $shipping + $tax;
+
                 // Create the order
                 $order = Order::create([
                     'user_id' => Auth::check() ? Auth::id() : null,
                     'status' => 'pending', // Awaiting payment on delivery
                     'payment_status' => 'unpaid',
                     'payment_method' => $request->payment_method,
-                    'grand_total' => $finalOrderTotal,
+                    'grand_total' => $totalWithTaxAndShipping,
                     'discount_amount' => $discountAmount,
                     'coupon_code' => $appliedCouponCode,
                     'shipping_address' => $shippingInfo,
@@ -455,8 +465,33 @@ class CheckoutController extends Controller
                 $amount += $price * $quantity;
             }
 
-            // Create a payment intent via Cashier
-            $paymentIntent = $user->createPaymentIntent($amount / 100, [ // Convert cents to dollars
+            // Apply coupon discount to order total if exists
+            $appliedCouponCode = session('applied_coupon');
+            $discountAmount = 0;
+            $finalOrderTotal = $amount;
+
+            if ($appliedCouponCode) {
+                $coupon = \App\Models\Coupon::where('code', $appliedCouponCode)->first();
+                if ($coupon && $coupon->isValid()) {
+                    if ($coupon->type === 'percentage') {
+                        $discountAmount = ($amount * $coupon->value) / 100;
+                    } elseif ($coupon->type === 'fixed') {
+                        $discountAmount = min($coupon->value, $amount); // Can't discount more than the total
+                    }
+                    $discountAmount = min($discountAmount, $amount); // Ensure discount doesn't exceed total
+                    $finalOrderTotal = $amount - $discountAmount;
+
+                    // Note: We don't increment usage_count here as it's done during order creation
+                }
+            }
+
+            // Apply tax calculation like in the view
+            $shipping = 500; // $5.00
+            $tax = $finalOrderTotal * 0.08; // 8% tax (using final total after coupon)
+            $totalWithTaxAndShipping = $finalOrderTotal + $shipping + $tax;
+
+            // Create a payment intent via Cashier (amount is already in cents)
+            $paymentIntent = $user->createPaymentIntent((int)$totalWithTaxAndShipping, [
                 'currency' => 'usd',
             ]);
 

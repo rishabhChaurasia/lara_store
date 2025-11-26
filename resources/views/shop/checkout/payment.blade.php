@@ -182,7 +182,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Get the Stripe publishable key from your config
-    const stripe = Stripe('{{ config("cashier.key") }}');
+    const stripe = Stripe({!! json_encode(config('cashier.key')) !!});
 
     const stripeRadio = document.getElementById('stripe');
     const codRadio = document.getElementById('cod');
@@ -243,91 +243,124 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Handle form submission
     paymentForm.addEventListener('submit', function(event) {
-        event.preventDefault();
+        try {
+            event.preventDefault();
 
-        // Get the payment method
-        const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
+            // Get the payment method
+            const paymentMethodRadio = document.querySelector('input[name="payment_method"]:checked');
+            if (!paymentMethodRadio) {
+                cardErrors.textContent = 'Please select a payment method.';
+                return;
+            }
+            const paymentMethod = paymentMethodRadio.value;
+            console.log('Selected payment method:', paymentMethod);
 
-        if (paymentMethod === 'stripe') {
-            // Disable the submit button to prevent multiple clicks
-            submitButton.disabled = true;
-            submitButton.textContent = 'Processing...';
+            if (paymentMethod === 'stripe') {
+                // Disable the submit button to prevent multiple clicks
+                submitButton.disabled = true;
+                submitButton.textContent = 'Processing...';
 
-            // Create a payment method
-            stripe.createPaymentMethod({
-                type: 'card',
-                card: card,
-                billing_details: {
-                    name: '{{ $shippingInfo['first_name'] . ' ' . $shippingInfo['last_name'] }}',
-                    email: '{{ Auth::user()->email }}',
-                    address: {
-                        line1: '{{ $shippingInfo['address'] }}',
-                        city: '{{ $shippingInfo['city'] }}',
-                        state: '{{ $shippingInfo['state'] }}',
-                        postal_code: '{{ $shippingInfo['zipcode'] }}',
-                        country: '{{ $shippingInfo['country'] }}',
-                    },
-                },
-            }).then(function(result) {
-                if (result.error) {
-                    // Inform the user if there was an error
-                    cardErrors.textContent = result.error.message;
+                // Verify that Stripe object is available
+                if (!stripe) {
+                    cardErrors.textContent = 'Stripe is not loaded properly.';
                     submitButton.disabled = false;
                     submitButton.textContent = 'Place Your Order';
-                } else {
-                    // Create payment intent from backend first
-                    fetch('{{ route("checkout.create-payment-intent") }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        },
-                        body: JSON.stringify({
-                            amount: {{ $finalTotal }},
-                            payment_method: result.paymentMethod.id
-                        })
-                    })
-                    .then(function(response) {
-                        return response.json();
-                    })
-                    .then(function(data) {
-                        if (data.error) {
-                            cardErrors.textContent = data.error;
-                            submitButton.disabled = false;
-                            submitButton.textContent = 'Place Your Order';
-                        } else {
-                            // Confirm the payment with the correct amount (after coupon discount)
-                            stripe.confirmCardPayment(data.client_secret, {
-                                payment_method: result.paymentMethod.id,
-                            }).then(function(result) {
-                                if (result.error) {
-                                    // Show error to your customer
-                                    cardErrors.textContent = result.error.message;
-                                    submitButton.disabled = false;
-                                    submitButton.textContent = 'Place Your Order';
-                                } else {
-                                    // The payment has been processed
-                                    if (result.paymentIntent.status === 'succeeded') {
-                                        // Set the payment intent ID in the form
-                                        paymentIntentInput.value = result.paymentIntent.id;
+                    return;
+                }
 
-                                        // Submit the form
-                                        paymentForm.submit();
-                                    }
-                                }
-                            });
-                        }
-                    })
-                    .catch(function(error) {
-                        cardErrors.textContent = 'An error occurred while processing your payment.';
+                // Create a payment method
+                stripe.createPaymentMethod({
+                    type: 'card',
+                    card: card,
+                    billing_details: {
+                        name: {!! json_encode($shippingInfo['first_name'] . ' ' . $shippingInfo['last_name']) !!},
+                        email: {!! json_encode(Auth::check() ? Auth::user()->email : '') !!},
+                        address: {
+                            line1: {!! json_encode($shippingInfo['address']) !!},
+                            city: {!! json_encode($shippingInfo['city']) !!},
+                            state: {!! json_encode($shippingInfo['state']) !!},
+                            postal_code: {!! json_encode($shippingInfo['zipcode']) !!},
+                            country: {!! json_encode($shippingInfo['country']) !!},
+                        },
+                    },
+                }).then(function(result) {
+                    if (result.error) {
+                        // Inform the user if there was an error
+                        cardErrors.textContent = result.error.message;
                         submitButton.disabled = false;
                         submitButton.textContent = 'Place Your Order';
-                    });
-                }
-            });
-        } else {
-            // For COD, just submit the form directly
-            paymentForm.submit();
+                    } else {
+                        // Create payment intent from backend first
+                        fetch({!! json_encode(route("checkout.create-payment-intent")) !!}, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            },
+                            body: JSON.stringify({})
+                        })
+                        .then(function(response) {
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            return response.json();
+                        })
+                        .then(function(data) {
+                            if (data.error) {
+                                cardErrors.textContent = data.error;
+                                submitButton.disabled = false;
+                                submitButton.textContent = 'Place Your Order';
+                            } else if (data.client_secret) {
+                                // Confirm the payment with the correct amount (after coupon discount)
+                                stripe.confirmCardPayment(data.client_secret, {
+                                    payment_method: result.paymentMethod.id,
+                                }).then(function(result) {
+                                    if (result.error) {
+                                        // Show error to your customer
+                                        cardErrors.textContent = result.error.message;
+                                        submitButton.disabled = false;
+                                        submitButton.textContent = 'Place Your Order';
+                                    } else {
+                                        // The payment has been processed
+                                        if (result.paymentIntent.status === 'succeeded') {
+                                            // Set the payment intent ID in the form
+                                            paymentIntentInput.value = result.paymentIntent.id;
+
+                                            // Submit the form
+                                            paymentForm.submit();
+                                        }
+                                    }
+                                });
+                            } else {
+                                cardErrors.textContent = 'No payment intent was created. Please try again.';
+                                submitButton.disabled = false;
+                                submitButton.textContent = 'Place Your Order';
+                            }
+                        })
+                        .catch(function(error) {
+                            console.error('Error:', error);
+                            cardErrors.textContent = 'An error occurred while processing your payment: ' + error.message;
+                            submitButton.disabled = false;
+                            submitButton.textContent = 'Place Your Order';
+                        });
+                    }
+                }).catch(function(error) {
+                    console.error('Error creating payment method:', error);
+                    cardErrors.textContent = 'An error occurred while creating the payment method: ' + error.message;
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Place Your Order';
+                });
+            } else {
+                // For COD, just submit the form directly
+                paymentForm.submit();
+            }
+        } catch (error) {
+            console.error('Form submission error:', error);
+            cardErrors.textContent = 'An unexpected error occurred: ' + error.message;
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Place Your Order';
+            }
         }
     });
 });
