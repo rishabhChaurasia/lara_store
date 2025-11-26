@@ -345,6 +345,126 @@ composer run setup
 - `PUT /admin/reviews/{id}/toggle-approval` - Toggle review approval
 - `DELETE /admin/reviews/{id}` - Reject review
 
+## Abandoned Cart Recovery System
+
+### Overview
+The Abandoned Cart Recovery System is designed to re-engage customers who leave items in their shopping cart without completing their purchase. This feature automatically detects abandoned carts and sends personalized email reminders to customers at predetermined intervals to encourage them to complete their purchase.
+
+### Business Impact
+- Helps recover 10-30% of lost sales from cart abandonment (industry average shows 70% abandonment rate)
+- Increases revenue with minimal additional cost
+- Improves customer retention through follow-up engagement
+- Enhances customer experience with convenient reminders
+
+### Key Features
+
+#### 1. Automatic Cart Tracking
+- Detects when a user adds items to cart but doesn't complete checkout
+- Records timestamps of last cart activity
+- Automatically marks carts as abandoned after a configurable threshold (default: 1 hour)
+
+#### 2. Multi-Touch Email Campaign
+- **First Reminder**: Sent 1 hour after cart abandonment
+- **Second Reminder**: Sent 24 hours after first reminder with 5% discount offer
+- **Third Reminder**: Sent 3 days after second reminder with 10% discount offer
+- All timing intervals and discount percentages are configurable by admin
+
+#### 3. Personalized Content
+- Email templates include actual cart items
+- Personalized greetings and messages
+- Clear call-to-action buttons to return to checkout
+- Discount codes automatically applied in later emails
+
+#### 4. Administrative Controls
+- **Dashboard**: Visual statistics showing total abandoned carts, notifications sent, and conversion rates
+- **Configuration**: Admin can customize reminder intervals and discount percentages
+- **Template Customization**: Admin can modify email subject lines and body content
+- **Analytics**: Monitor recovery statistics and opt-out rates
+
+#### 5. Performance Optimized
+- Database indexes for efficient querying of abandoned carts
+- Queue-based processing for scalable email delivery
+- Proper error handling and logging
+
+### How It Works
+
+1. **Cart Abandonment Detection**: The system monitors customer activity and identifies carts that have been inactive for longer than the configured threshold.
+
+2. **Schedule Processing**: A scheduled job runs every 30 minutes to identify new abandoned carts and process scheduled reminders.
+
+3. **Notification Sending**: For eligible carts, the system dispatches notification jobs to send personalized email reminders.
+
+4. **Tracking**: All notifications are logged in the database to track open rates, click-through rates, and conversions.
+
+5. **Recovery**: Successful conversions from abandoned cart emails are recorded and reflected in admin analytics.
+
+### Admin Interface
+
+#### Dashboard Access
+- Navigate to "Abandoned Cart Analytics" in the Marketing section of the admin panel
+- View real-time statistics including:
+  - Total abandoned carts
+  - Notifications sent
+  - Recovered carts
+  - Conversion rate percentage
+  - Notification breakdown by type
+  - Recent abandoned carts with items information
+
+#### Configuration Access
+- Navigate to "Abandoned Cart Settings" in the Marketing section
+- Customize the following settings:
+  - First reminder timing (hours after abandonment)
+  - Second reminder timing (hours after first reminder)
+  - Third reminder timing (days after second reminder)
+  - Abandoned cart threshold (minutes of inactivity)
+  - Discount percentages for second and third reminders
+  - Edit email subject lines and body content for all three reminder types
+
+### Environment Variables
+The system supports the following environment variables for easy configuration:
+```
+ABANDONED_CART_FIRST_REMINDER_HOURS=1
+ABANDONED_CART_SECOND_REMINDER_HOURS=24
+ABANDONED_CART_THIRD_REMINDER_DAYS=3
+ABANDONED_CART_THRESHOLD_MINUTES=60
+ABANDONED_CART_FIRST_DISCOUNT=0
+ABANDONED_CART_SECOND_DISCOUNT=5
+ABANDONED_CART_THIRD_DISCOUNT=10
+```
+
+### Technical Architecture
+
+#### Database Schema
+- `abandoned_cart_notifications` table stores notification history
+- Extended `carts` table with `abandoned_at`, `remind_at`, and `notified_count` columns
+- `abandoned_cart_settings` table for admin-configured settings
+
+#### Core Components
+- `ProcessAbandonedCarts` job: Periodically identifies and processes abandoned carts
+- `SendAbandonedCartNotification` job: Sends individual notifications
+- Multiple notification classes for each reminder type
+- Custom email templates for each stage
+
+#### Queue System
+- Uses Laravel's queue system for efficient notification processing
+- Database queue driver recommended for reliability
+- Queue workers process notifications asynchronously
+
+### Expected Outcomes
+- 10-20% recovery rate of abandoned carts
+- 5-15% increase in overall revenue
+- Improved customer engagement and retention
+- Better understanding of customer behavior patterns
+
+### Monitoring Success Metrics
+- Track number of abandoned carts and recoveries
+- Monitor email open and click-through rates
+- Measure conversion rate from abandoned cart emails
+- Track revenue generated from recovered carts
+- Monitor opt-out rates for continuous improvement
+
+The abandoned cart recovery system is designed to seamlessly integrate with your existing e-commerce platform and provide immediate value in recovering lost sales while maintaining a positive customer experience.
+
 ## Contributing
 
 Thank you for considering contributing to LaraStore! Please follow these steps:

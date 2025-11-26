@@ -11,6 +11,8 @@ use App\Http\Controllers\Shop\CheckoutController;
 use App\Http\Controllers\FaqController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\PoliciesController;
+use App\Http\Controllers\Admin\AbandonedCartController;
+use App\Http\Controllers\Admin\AbandonedCartSettingsController;
 
 Route::get('/', [ShopController::class, 'index'])->name('home');
 
@@ -101,6 +103,14 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
             Route::get('/sales-data', [App\Http\Controllers\Admin\MarketingController::class, 'salesReportData'])->name('salesData');
             Route::get('/conversion-rate', [App\Http\Controllers\Admin\MarketingController::class, 'conversionRate'])->name('conversionRate');
             Route::get('/stock-data', [App\Http\Controllers\Admin\MarketingController::class, 'stockReportData'])->name('stockData');
+        });
+
+        Route::prefix('abandoned-carts')->name('abandoned-carts.')->group(function () {
+            Route::get('/', [AbandonedCartController::class, 'index'])->name('index');
+            Route::prefix('settings')->name('settings.')->group(function () {
+                Route::get('/', [AbandonedCartSettingsController::class, 'index'])->name('index');
+                Route::put('/', [AbandonedCartSettingsController::class, 'update'])->name('update');
+            });
         });
 
         Route::prefix('inventory')->name('inventory.')->group(function () {

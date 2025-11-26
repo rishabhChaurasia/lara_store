@@ -1,0 +1,58 @@
+<?php
+
+namespace App\Mail;
+
+use App\Models\Cart;
+use App\Services\AbandonedCartConfigService;
+use Illuminate\Bus\Queueable;
+use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Content;
+use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Queue\SerializesModels;
+
+class AbandonedCartFirstReminderMail extends Mailable
+{
+    use Queueable, SerializesModels;
+
+    public Cart $cart;
+
+    /**
+     * Create a new message instance.
+     */
+    public function __construct(Cart $cart)
+    {
+        $this->cart = $cart;
+    }
+
+    /**
+     * Get the message envelope.
+     */
+    public function envelope(): Envelope
+    {
+        $subject = AbandonedCartConfigService::get('first_reminder_subject', 'Your cart is waiting for you!');
+
+        return new Envelope(
+            subject: $subject,
+        );
+    }
+
+    /**
+     * Get the message content definition.
+     */
+    public function content(): Content
+    {
+        return new Content(
+            markdown: 'emails.abandoned-cart-first-reminder',
+        );
+    }
+
+    /**
+     * Get the attachments for the message.
+     *
+     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     */
+    public function attachments(): array
+    {
+        return [];
+    }
+}
