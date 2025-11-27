@@ -26,6 +26,11 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
+        // If the user needs to do 2FA, the LoginRequest will have set the 'login.user' session
+        if (session()->has('login.user')) {
+            return redirect()->route('two-factor.challenge');
+        }
+
         $request->session()->regenerate();
 
         // Merge guest cart with user cart
@@ -105,11 +110,24 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        $user = $request->user();
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();
 
         $request->session()->regenerateToken();
+
+        // If the user is logged in, invalidate all their sessions across devices
+        if ($user) {
+            // Clear remember me token to log out from remember me sessions
+            $user->update(['remember_token' => null]);
+
+            // Delete all sessions for this user from the sessions table
+            \DB::table('sessions')
+                ->where('user_id', $user->id)
+                ->delete();
+        }
 
         return redirect('/');
     }

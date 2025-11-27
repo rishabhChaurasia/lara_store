@@ -94,6 +94,13 @@
                         Login
                     </button>
                 </form>
+
+                @if ($errors->any() && $errors->get('email') && in_array(trans('auth.two_factor_required'), $errors->get('email')))
+                    <script>
+                        // Redirect to 2FA challenge page
+                        window.location.href = "{{ route('two-factor.challenge') }}";
+                    </script>
+                @endif
             </div>
         </div>
     </div>

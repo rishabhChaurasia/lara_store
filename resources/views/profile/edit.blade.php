@@ -61,6 +61,13 @@
                     </div>
                 </div>
 
+                <!-- Two-Factor Authentication -->
+                <div class="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-zinc-950">
+                    <div class="p-6">
+                        @include('profile.partials.two-factor-authentication-form')
+                    </div>
+                </div>
+
                 <!-- Delete Account -->
                 <div class="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-zinc-950">
                     <div class="p-6">

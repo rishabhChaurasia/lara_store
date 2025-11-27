@@ -8,10 +8,42 @@ Please provide a detailed description of the vulnerability, including steps to r
 
 ## Security Features Implemented
 
-The LaraStore application includes several security measures:
+The LaraStore application includes comprehensive security measures across multiple areas:
 
+### Authentication & Authorization
+- **Two-Factor Authentication (2FA)**: Enhanced security with TOTP-based authentication using Google Authenticator
+  - QR code setup for easy configuration
+  - Backup recovery codes for account access
+  - Mandatory 2FA for admin accounts (cannot be disabled)
+- **Role-Based Permissions**: Advanced permission system beyond basic admin/user roles
+  - Granular permissions for different admin roles (Super Admin, Product Manager, Order Manager, etc.)
+  - Permission-based middleware for route protection
+  - Flexible role assignment and permission management
+
+### Session Management
+- **Enhanced Session Security**:
+  - Role-based session timeouts (30 minutes for regular users, 120 minutes for admins)
+  - Secure session cookies with HTTPS, HttpOnly, and SameSite=strict attributes
+  - Complete session invalidation on logout across all devices
+  - Prevention of session hijacking
+
+### Password Security
+- **Password Strength Requirements**: Enforced strong passwords with:
+  - Minimum 12 characters
+  - Uppercase, lowercase, number, and special character requirements
+- **Password Rotation Policy**: Automatic password expiration after 90 days
+- **Secure Password Storage**: Bcrypt hashing with configurable rounds
+
+### Brute Force Protection
+- **Login Attempt Tracking**: Comprehensive logging of all login attempts with IP and user agent
+- **Rate Limiting**: Protection against automated attacks with configurable limits
+- **Account Lockout**: Automatic account suspension after multiple failed attempts (30-minute lockout)
+- **IP-based Restrictions**: Protection against attacks from suspicious IP addresses
+
+### Additional Security Measures
+- **Email Verification**: Required for new account activation
 - **CSRF Protection**: Cross-Site Request Forgery protection on all forms
-- **Input Validation and Sanitization**: All user inputs are validated and sanitized
+- **Input Validation & Sanitization**: All user inputs are validated and sanitized
 - **SQL Injection Prevention**: Prevention through Eloquent ORM usage
 - **XSS Prevention**: Cross-Site Scripting prevention through Blade template escaping
 - **Secure Password Hashing**: Passwords are hashed using Laravel's secure hashing methods
@@ -19,6 +51,7 @@ The LaraStore application includes several security measures:
 - **Role-Based Access Control**: Proper authorization based on user roles
 - **Secure Session Management**: Laravel's secure session handling
 - **File Upload Validation**: Validation for file types, sizes, and security checks
+- **Database Encryption**: Sensitive data encryption at rest
 
 ## Security Best Practices for Users
 
@@ -31,6 +64,9 @@ If you're using or extending LaraStore, please follow these security best practi
 - Review and audit custom code for security vulnerabilities
 - Limit access to admin panel to authorized personnel only
 - Monitor logs for suspicious activity
+- Regularly review user roles and permissions
+- Enable two-factor authentication for all admin accounts
+- Check for and apply security updates regularly
 
 ## Supported Versions
 
